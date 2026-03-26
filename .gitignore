@@ -1,0 +1,66 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments and env files
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+*.egg
+.eggs/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model artifacts / caches
+models/
+.checkpoints/
+.cache/
+
+# Hugging Face / hub cache markers (local-only; don't commit large caches)
+# Note: do NOT attempt to ignore ~/.cache/huggingface here; keep repo-local cache dirs only
+
+# ML artifacts
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Logs
+logs/
+*.log
+
+# Secrets
+*.pem
+*.key
+secrets.env
+
+# Node
+node_modules/
