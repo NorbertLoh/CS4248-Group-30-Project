@@ -1,17 +1,17 @@
 import json
 import glob
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from tabulate import tabulate
 
 # Load facebook-samples.jsonl (ground truth)
-with open('datapreparation/output/facebook-samples.jsonl', 'r', encoding='utf-8') as f:
+with open('datapreparation/output/facebook-samples_50.jsonl', 'r', encoding='utf-8') as f:
     gt = [json.loads(line) for line in f]
     gt_dict = {str(item['id']): item['label'] for item in gt}
 
 # Find all prediction files
 result_files = glob.glob('datapreparation/output/results/preds_*.jsonl')
 
-headers = ["Model", "Accuracy", "Precision", "Recall", "F1 Score"]
+headers = ["Model", "Accuracy", "Precision", "Recall", "F1 Score", "AUROC"]
 table = []
 
 for pred_file in result_files:
@@ -36,7 +36,11 @@ for pred_file in result_files:
     prec = precision_score(true_labels, pred_labels, zero_division=0)
     rec = recall_score(true_labels, pred_labels, zero_division=0)
     f1 = f1_score(true_labels, pred_labels, zero_division=0)
+    try:
+        auroc = roc_auc_score(true_labels, pred_labels)
+    except Exception:
+        auroc = float('nan')
     model_name = pred_file.split('preds_')[1].rsplit('.jsonl', 1)[0]
-    table.append([model_name, f"{acc:.4f}", f"{prec:.4f}", f"{rec:.4f}", f"{f1:.4f}"])
+    table.append([model_name, f"{acc:.4f}", f"{prec:.4f}", f"{rec:.4f}", f"{f1:.4f}", f"{auroc:.4f}"])
 
 print(tabulate(table, headers=headers, tablefmt="github"))
