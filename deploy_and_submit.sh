@@ -22,4 +22,4 @@ rsync -azP \
 	--exclude 'results' \
 	. "${REMOTE_USER}@${REMOTE_HOST}:~/${REMOTE_TARGET}"
 
-echo "Sync complete — not submitting any remote jobs (deploy-only mode)."
+echo "Sync complete â€” not submitting any remote jobs (deploy-only mode)."

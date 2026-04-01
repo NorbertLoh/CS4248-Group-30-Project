@@ -1,21 +1,19 @@
-#!/bin/bash
-# Script to fetch all files from remote output directory
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Script to fetch predictions produced by api-inference/api-inference-local.py
 # Usage: ./get_predictions.sh
 
-REMOTE_USER="norbert"
-REMOTE_HOST="xlogin.comp.nus.edu.sg"
-REMOTE_BASE_DIR="CS4248/cs4248"  # Adjusted to match your folder structure
+REMOTE_USER="${REMOTE_USER:-norbert}"
+REMOTE_HOST="${REMOTE_HOST:-xlogin.comp.nus.edu.sg}"
+REMOTE_BASE_DIR="${REMOTE_BASE_DIR:-CS4248/cs4248}"
 
-REMOTE_FOLDER="~/$REMOTE_BASE_DIR/datapreparation/output/"
-LOCAL_FOLDER="./datapreparation/output/"
+REMOTE_FILE="~/$REMOTE_BASE_DIR/api-inference/results/qwen3_vl_2b_local_results.jsonl"
+LOCAL_DIR="./api-inference/results"
 
-# Ensure local directory exists
-mkdir -p "$LOCAL_FOLDER"
+mkdir -p "$LOCAL_DIR"
 
-echo "Syncing all files from $REMOTE_HOST:$REMOTE_FOLDER to $LOCAL_FOLDER"
+echo "Fetching predictions from $REMOTE_HOST:$REMOTE_FILE -> $LOCAL_DIR/"
+rsync -azP "$REMOTE_USER@$REMOTE_HOST:$REMOTE_FILE" "$LOCAL_DIR/"
 
-# -a: archive mode (preserves permissions/timestamps)
-# -v: verbose
-# -z: compress data during transfer (great for .jsonl text files)
-# -P: show progress bar
-rsync -avzP "$REMOTE_USER@$REMOTE_HOST:$REMOTE_FOLDER" "$LOCAL_FOLDER"
+echo "Done. Downloaded qwen3_vl_2b_local_results.jsonl"

@@ -148,7 +148,8 @@ def run_inference(memes: List[Dict], rag: MemeCapRAG) -> List[Dict]:
                         "text": (
                             "### TASK: Contrastive Metaphor Analysis\n\n"
                             "### 1. REFERENCE CONTEXT (MemeCap Benign Examples):\n"
-                            f"{memecap_context}\n\n"
+                            # f"{memecap_context}\n\n"
+                            "No reference context available.\n\n"
                             
                             "### 2. TARGET MEME DATA:\n"
                             f"Text: '{meme['text']}'\n\n"
