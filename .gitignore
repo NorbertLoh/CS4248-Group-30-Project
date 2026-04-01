@@ -64,3 +64,5 @@ secrets.env
 
 # Node
 node_modules/
+deploy_and_submit.sh
+get_predictions.sh

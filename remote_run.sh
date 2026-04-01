@@ -10,7 +10,7 @@ if [ -z "${SLURM_JOB_ID:-}" ]; then
 	# exec srun --gres=gpu:1 --constraint=${constraint} "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
-	exec srun --unbuffered --label --gres="gpu:a100-40:1"  --mem=32G "$0" "$@"
+	exec srun --unbuffered --label --gres="gpu:a100-40:1" --time=03:00:00 --mem=32G "$0" "$@"
 
 fi
 
