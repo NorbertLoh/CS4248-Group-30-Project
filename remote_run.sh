@@ -10,7 +10,7 @@ if [ -z "${SLURM_JOB_ID:-}" ]; then
 	# exec srun --gres=gpu:1 --constraint=${constraint} "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
-	exec srun --unbuffered --label --gres="gpu:a100-40:1"  --mem=32G "$0" "$@"
+	exec srun --unbuffered --label --gres="gpu:a100-40:1" --time=03:00:00 --mem=32G "$0" "$@"
 
 fi
 
@@ -29,6 +29,13 @@ echo "Running on host: $(hostname)"
 if command -v nvidia-smi >/dev/null 2>&1; then
 	nvidia-smi -L || true
 fi
+
+# Build SigLIP RAG embeddings if they don't exist
+RAG_DATA_DIR="inference/rag_data"
+SIGLIP_EMBEDDINGS="$RAG_DATA_DIR/siglip_embeddings.npy"
+
+
+"$PYBIN" -u inference/build_clip_rag.py
 
 echo "Running inference script with: $PYBIN inference/inference.py $@"
 "$PYBIN" -u inference/inference.py "$@"
