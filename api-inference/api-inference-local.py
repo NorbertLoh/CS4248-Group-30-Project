@@ -236,7 +236,8 @@ def infer_with_local_qwen(
                     "text": (
                         "### TASK: Contrastive Metaphor Analysis\n\n"
                         "### 1. REFERENCE CONTEXT (MemeCap Benign Examples):\n"
-                        f"{memecap_context}\n\n"
+                        "No reference Meme available for this example.\n\n"
+                        # f"{memecap_context}\n\n"
                         "### 2. TARGET MEME DATA:\n"
                         f"Text: '{meme_text}'\n\n"
                         "### 3. REASONING PROTOCOL:\n"
