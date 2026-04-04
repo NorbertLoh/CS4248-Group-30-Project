@@ -2,6 +2,7 @@ import json
 import re
 import os
 import sys  # Added for stdout flushing
+import argparse
 import torch
 import numpy as np
 import pickle
@@ -283,14 +284,14 @@ class SigLIPRetriever:
         return self.retrieve(query, k=k, is_image=False)
 
 
-def get_siglip_retriever(k: int = 3):
+def get_siglip_retriever(k: int = 3, version: str = "memecap_only"):
     """
     Factory function to create a SigLIP retriever.
     Returns a retriever configured for the memecap dataset.
     """
     base_path = Path(__file__).resolve().parent
-    embeddings_path = base_path / "rag_data" / "siglip_embeddings.npy"
-    metadata_path = base_path / "rag_data" / "siglip_metadata.pkl"
+    embeddings_path = base_path / "rag_data" / f"siglip_embeddings_{version}.npy"
+    metadata_path = base_path / "rag_data" / f"siglip_metadata_{version}.pkl"
 
     if not embeddings_path.exists():
         raise FileNotFoundError(
@@ -612,6 +613,7 @@ class RerankingRetriever:
 # =============================
 # RAG Configuration
 USE_SIGLIP_RAG = True  # Set to False to use basic text retriever
+KB_VERSION = "memecap_only"  # Options: "no_context", "memecap_only", "memecap_facebook"
 USE_RERANKING = False   # Set to True to enable Qwen3 reranking
 RAG_K = 3              # Number of examples to retrieve (final k)
 RERANK_INITIAL_K = 10  # Number of candidates to retrieve before reranking
@@ -620,13 +622,13 @@ RERANK_BATCH_SIZE = 4  # Batch size for reranking (number of queries to process 
 
 MODELS_TO_RUN = [
     # "unsloth/Qwen3-VL-2B-Instruct-unsloth-bnb-4bit",
-    "unsloth/Qwen3-VL-2B-Thinking-unsloth-bnb-4bit",
-    # "unsloth/Qwen3-VL-8B-Instruct-unsloth-bnb-4bit",
-    "unsloth/Qwen3-VL-8B-Thinking-unsloth-bnb-4bit",
+    # "unsloth/Qwen3-VL-2B-Thinking-unsloth-bnb-4bit",
+    "unsloth/Qwen3-VL-8B-Instruct-unsloth-bnb-4bit",
+    # "unsloth/Qwen3-VL-8B-Thinking-unsloth-bnb-4bit",
 ]
 
 BASE = Path(__file__).resolve().parents[1]
-SAMPLES_JSONL = BASE / "datapreparation" / "output" / "facebook-samples.jsonl"
+SAMPLES_JSONL = BASE / "datapreparation" / "output" / "facebook-samples-test.jsonl"
 OUTPUT_DIR = BASE / "datapreparation" / "output" / "results"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -713,7 +715,7 @@ class ChatQwen3(BaseChatModel):
 # =============================
 # 5. UTILS & RAG
 # =============================
-def get_rag_retriever(use_siglip=True, k=3, use_reranking=False, rerank_initial_k=10, rerank_model=None):
+def get_rag_retriever(use_siglip=True, k=3, use_reranking=False, rerank_initial_k=10, rerank_model=None, kb_version="memecap_only"):
     """
     Get RAG retriever - either SigLIP-based (memecap) or fallback text-based.
     Optionally wraps with Qwen3 reranker for improved relevance.
@@ -724,6 +726,7 @@ def get_rag_retriever(use_siglip=True, k=3, use_reranking=False, rerank_initial_
         use_reranking: If True, use Qwen3 reranking
         rerank_initial_k: Number of candidates to retrieve before reranking
         rerank_model: Model name for reranker
+        kb_version: Which knowledge base version to load
 
     Returns:
         Configured retriever (with or without reranking)
@@ -735,10 +738,10 @@ def get_rag_retriever(use_siglip=True, k=3, use_reranking=False, rerank_initial_
             if use_reranking:
                 print(f"Using SigLIP retriever with Qwen3 reranking (initial_k={rerank_initial_k}, final_k={k})")
                 # Get more candidates for reranking
-                base_retriever = get_siglip_retriever(k=rerank_initial_k)
+                base_retriever = get_siglip_retriever(k=rerank_initial_k, version=kb_version)
             else:
-                print(f"Using SigLIP-based retriever with k={k}")
-                base_retriever = get_siglip_retriever(k=k)
+                print(f"Using SigLIP-based retriever with k={k} and version={kb_version}")
+                base_retriever = get_siglip_retriever(k=k, version=kb_version)
         except FileNotFoundError as e:
             print(f"SigLIP embeddings not found: {e}")
             print("Falling back to basic text retriever")
@@ -787,6 +790,13 @@ def extract_output(ai_message, is_thinking):
 # 6. MAIN INFERENCE LOOP
 # =============================
 def main():
+    parser = argparse.ArgumentParser(description="Run RAG Inference Pipeline")
+    parser.add_argument("--kb_version", type=str, default=KB_VERSION, choices=["no_context", "memecap_only", "memecap_facebook"], help="The knowledge base version to load.")
+    
+    # Using parse_known_args in case other frameworks or test scripts pass extra args
+    args, _ = parser.parse_known_args()
+    current_kb_version = args.kb_version
+    
     if not SAMPLES_JSONL.exists():
         print(f"Error: Could not find {SAMPLES_JSONL}")
         return
@@ -802,7 +812,8 @@ def main():
         k=RAG_K,
         use_reranking=USE_RERANKING,
         rerank_initial_k=RERANK_INITIAL_K,
-        rerank_model=RERANK_MODEL
+        rerank_model=RERANK_MODEL,
+        kb_version=current_kb_version
     )
 
     # Pre-resolve all image paths first
@@ -865,7 +876,7 @@ def main():
 
     for model_path in MODELS_TO_RUN:
         model_id = model_path.split("/")[-1]
-        output_file = OUTPUT_DIR / f"preds_{model_id}.jsonl"
+        output_file = OUTPUT_DIR / f"preds_{model_id}_{current_kb_version}.jsonl"
         
         print(f"\n>>> Loading Model: {model_id}")
         sys.stdout.flush()
