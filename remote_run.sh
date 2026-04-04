@@ -20,9 +20,12 @@ PYBIN="$VENV_DIR/bin/python"
 # TARGET_SCRIPT="sft/export_gguf.py"
 # TARGET_SCRIPT="sft/gguftest.py"
 # TARGET_SCRIPT="sft/loratest.py"
-TARGET_SCRIPT="hateful-captioning/hateful-captioning.py"
-QWEN_REPO_ID="Qwen/Qwen3-VL-2B-Instruct"
-QWEN_MODEL_DIR="${QWEN_VL_MODEL_PATH:-$(pwd)/models/Qwen3-VL-2B-Instruct}"
+TARGET_SCRIPT="inference/inference.py"
+TARGET_ARGS="--kb_version no_context"
+# TARGET_SCRIPT="inference/build_clip_rag.py"
+# TARGET_ARGS="--version all"
+QWEN_REPO_ID="unsloth/Qwen3-VL-8B-Instruct-unsloth-bnb-4bit"
+QWEN_MODEL_DIR="${QWEN_UNSLOTH_4BIT_MODEL:-$(pwd)/models/Qwen3-VL-8B-Instruct-unsloth-bnb-4bit}"
 
 echo "Starting remote run at $(date)"
 
@@ -42,24 +45,28 @@ if [ ! -f "$TARGET_SCRIPT" ]; then
 	exit 1
 fi
 
-# if [ ! -f "$QWEN_MODEL_DIR/model.safetensors" ]; then
-# 	echo "Qwen model not found at: $QWEN_MODEL_DIR"
-# 	echo "Downloading $QWEN_REPO_ID to remote workspace..."
-# 	mkdir -p "$QWEN_MODEL_DIR"
-# 	"$PYBIN" - <<PY
-# from huggingface_hub import snapshot_download
-# snapshot_download(
-#     repo_id="$QWEN_REPO_ID",
-#     local_dir=r"$QWEN_MODEL_DIR",
-# )
-# print("Model download complete")
-# PY
-# fi
+if [ ! -f "$QWEN_MODEL_DIR/config.json" ]; then
+	echo "Unsloth 4-bit model not found locally at: $QWEN_MODEL_DIR"
+	echo "Downloading $QWEN_REPO_ID to remote workspace..."
+	mkdir -p "$QWEN_MODEL_DIR"
+	"$PYBIN" - <<PY
+import os
+from huggingface_hub import snapshot_download
 
-# export QWEN_VL_MODEL_PATH="$QWEN_MODEL_DIR"
-# echo "Using QWEN_VL_MODEL_PATH=$QWEN_VL_MODEL_PATH"
+snapshot_download(
+    repo_id="$QWEN_REPO_ID",
+    local_dir=r"$QWEN_MODEL_DIR",
+    local_dir_use_symlinks=False,
+    token=os.environ.get("HF_TOKEN"),
+)
+print("Model download complete")
+PY
+fi
 
-echo "Running inference script with: $PYBIN $TARGET_SCRIPT $@"
-"$PYBIN" -u "$TARGET_SCRIPT" "$@"
+TARGET_ARGS="$TARGET_ARGS"
+echo "Using local Unsloth model dir: $QWEN_MODEL_DIR"
+
+echo "Running inference script with: $PYBIN $TARGET_SCRIPT $TARGET_ARGS $@"
+"$PYBIN" -u "$TARGET_SCRIPT" $TARGET_ARGS "$@"
 
 echo "Remote run finished at $(date)"
