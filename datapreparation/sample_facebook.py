@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Sample balanced dataset from a JSONL face dataset and copy images.
+"""Sample balanced dataset from a JSONL face dataset.
 
 Reads an input JSONL where each line is a JSON object with at least the
 fields: `id`, `img` (relative image path), and `label` (0 or 1). Produces
-an output JSONL with the sampled records and copies referenced images into
-an output images folder. The output `img` field is updated to point to the
-copied image path (relative to the JSONL file location).
+an output JSONL with the sampled records. The output `img` field keeps the
+original relative image path from the source dataset.
 
 Usage example:
     python datapreparation/sample_faces.py -n 100 \
@@ -19,7 +18,6 @@ from __future__ import annotations
 
 import json
 import random
-import shutil
 import sys
 from pathlib import Path
 from typing import Dict, List, Any
@@ -30,11 +28,9 @@ from typing import Dict, List, Any
 BASE = Path(__file__).resolve().parents[1]
 INPUT = BASE / "facebook-data" / "train.jsonl"
 IMAGES_ROOT = BASE / "facebook-data"
-CAPTIONS_OUTPUT_DIR = BASE / "hateful-captioning"
 # Output folder inside datapreparation: datapreparation/output
 OUTPUT_DIR = BASE / "datapreparation" / "output"
-OUTPUT_JSONL = OUTPUT_DIR / "facebook-samples-test.jsonl"
-OUTPUT_IMAGES_DIR = OUTPUT_DIR / "facebook-images"
+OUTPUT_JSONL = OUTPUT_DIR / "facebook-samples-test-rationale-excluded.jsonl"
 DEFAULT_N = 400  # must be even
 SEED = 42
 
@@ -67,54 +63,6 @@ def ask_n(default: int) -> int:
         return default
 
 
-def load_captioned_keys(captions_dir: Path) -> tuple[set[int], set[str]]:
-    captioned_ids: set[int] = set()
-    captioned_images: set[str] = set()
-
-    for path in sorted(captions_dir.glob("captions_output*.jsonl")):
-        for record in load_jsonl(path):
-            post_id = record.get("post_id")
-            if post_id is not None:
-                try:
-                    captioned_ids.add(int(post_id))
-                except (TypeError, ValueError):
-                    pass
-
-            img_fname = record.get("img_fname")
-            if img_fname:
-                captioned_images.add(str(Path(img_fname).name))
-
-    return captioned_ids, captioned_images
-
-
-def record_is_captioned(record: Dict[str, Any], captioned_ids: set[int], captioned_images: set[str]) -> bool:
-    post_id = record.get("id")
-    if post_id is not None:
-        try:
-            if int(post_id) in captioned_ids:
-                return True
-        except (TypeError, ValueError):
-            pass
-
-    img_field = record.get("img")
-    if img_field and Path(str(img_field)).name in captioned_images:
-        return True
-
-    return False
-
-
-def filter_uncaptioned_records(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    if not CAPTIONS_OUTPUT_DIR.exists():
-        print(f"Captions directory not found: {CAPTIONS_OUTPUT_DIR}", file=sys.stderr)
-        sys.exit(2)
-
-    captioned_ids, captioned_images = load_captioned_keys(CAPTIONS_OUTPUT_DIR)
-    return [
-        record for record in records
-        if not record_is_captioned(record, captioned_ids, captioned_images)
-    ]
-
-
 def group_records_by_label(records: List[Dict[str, Any]]) -> Dict[int, List[Dict[str, Any]]]:
     by_label = {0: [], 1: []}
     for record in records:
@@ -129,8 +77,8 @@ def sample_balanced_records(records: List[Dict[str, Any]], n: int, rnd: random.R
     need_each = n // 2
     if len(by_label[0]) < need_each or len(by_label[1]) < need_each:
         print(
-            f"Not enough uncaptioned samples to satisfy 50/50: need {need_each} of each label; "
-            f"found {len(by_label[0])} zeros and {len(by_label[1])} ones after filtering captioned examples",
+            f"Not enough samples to satisfy 50/50: need {need_each} of each label; "
+            f"found {len(by_label[0])} zeros and {len(by_label[1])} ones",
             file=sys.stderr,
         )
         sys.exit(3)
@@ -140,9 +88,7 @@ def sample_balanced_records(records: List[Dict[str, Any]], n: int, rnd: random.R
     return sampled
 
 
-def copy_sampled_images(sampled: List[Dict[str, Any]]) -> List[str]:
-    OUTPUT_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-
+def validate_sampled_images(sampled: List[Dict[str, Any]]) -> List[str]:
     missing: List[str] = []
     for rec in sampled:
         img_field = rec.get("img")
@@ -158,11 +104,6 @@ def copy_sampled_images(sampled: List[Dict[str, Any]]) -> List[str]:
 
         if not src.exists():
             missing.append(str(src))
-            continue
-
-        dst = OUTPUT_IMAGES_DIR / Path(src.name)
-        shutil.copy2(src, dst)
-        rec["img"] = str(Path(OUTPUT_IMAGES_DIR.name) / src.name)
 
     return missing
 
@@ -186,9 +127,8 @@ def main() -> None:
         sys.exit(2)
 
     records = load_jsonl(INPUT)
-    filtered_records = filter_uncaptioned_records(records)
-    sampled = sample_balanced_records(filtered_records, n, rnd)
-    missing = copy_sampled_images(sampled)
+    sampled = sample_balanced_records(records, n, rnd)
+    missing = validate_sampled_images(sampled)
 
     if missing:
         print(f"Error: {len(missing)} referenced images were not found. Examples: {missing[:5]}", file=sys.stderr)
@@ -196,7 +136,7 @@ def main() -> None:
 
     write_output(sampled)
 
-    print(f"Wrote {len(sampled)} records to {OUTPUT_JSONL} and copied images to {OUTPUT_IMAGES_DIR}")
+    print(f"Wrote {len(sampled)} records to {OUTPUT_JSONL}")
 
 
 if __name__ == "__main__":
