@@ -29,11 +29,17 @@ export XDG_CACHE_HOME="$SCRATCH_ROOT/xdg-cache"
 
 VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
-TARGET_SCRIPT="${TARGET_SCRIPT:-cara/baseline.py}"
+TARGET_SCRIPT="${TARGET_SCRIPT:-cara/ablation/roberta-clip-baseline.py}"
 
 BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
-BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_baseline_vllm_8b_Thinking.jsonl}"
-BASELINE_MODEL_ID="${BASELINE_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
+BASELINE_IMG_DIR="${BASELINE_IMG_DIR:-facebook-data/img}"
+BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_roberta_clip_baseline.jsonl}"
+ROBERTA_MODEL_DIR="${ROBERTA_MODEL_DIR:-metameme_roberta_model}"
+CLIP_MODEL_ID="${CLIP_MODEL_ID:-openai/clip-vit-base-patch32}"
+TEXT_WEIGHT="${TEXT_WEIGHT:-0.7}"
+IMAGE_WEIGHT="${IMAGE_WEIGHT:-0.3}"
+THRESHOLD="${THRESHOLD:-0.5}"
+BATCH_SIZE="${BATCH_SIZE:-16}"
 BASELINE_ARGS="${BASELINE_ARGS:-}"
 
 echo "Starting remote run at $(date)"
@@ -55,15 +61,26 @@ if [ ! -f "$TARGET_SCRIPT" ]; then
 fi
 
 echo "Baseline data path: $BASELINE_DATA_PATH"
+echo "Baseline image dir: $BASELINE_IMG_DIR"
 echo "Baseline output path: $BASELINE_OUT_PATH"
-echo "Model ID: $BASELINE_MODEL_ID"
+echo "RoBERTa model dir: $ROBERTA_MODEL_DIR"
+echo "CLIP model id: $CLIP_MODEL_ID"
+echo "Weights: text=$TEXT_WEIGHT image=$IMAGE_WEIGHT"
+echo "Threshold: $THRESHOLD"
+echo "Batch size: $BATCH_SIZE"
 
 mkdir -p "$(dirname "$BASELINE_OUT_PATH")"
 
-echo "Running baseline inference script: $PYBIN $TARGET_SCRIPT $BASELINE_ARGS $*"
+echo "Running RoBERTa-CLIP baseline script: $PYBIN $TARGET_SCRIPT $BASELINE_ARGS $*"
 BASELINE_DATA_PATH="$BASELINE_DATA_PATH" \
+BASELINE_IMG_DIR="$BASELINE_IMG_DIR" \
 BASELINE_OUT_PATH="$BASELINE_OUT_PATH" \
-BASELINE_MODEL_ID="$BASELINE_MODEL_ID" \
+ROBERTA_MODEL_DIR="$ROBERTA_MODEL_DIR" \
+CLIP_MODEL_ID="$CLIP_MODEL_ID" \
+TEXT_WEIGHT="$TEXT_WEIGHT" \
+IMAGE_WEIGHT="$IMAGE_WEIGHT" \
+THRESHOLD="$THRESHOLD" \
+BATCH_SIZE="$BATCH_SIZE" \
 "$PYBIN" -u "$TARGET_SCRIPT" \
 	$BASELINE_ARGS "$@"
 

@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Script to fetch outputs produced by cara/baseline.py
-# Usage: ./get_predictions_baseline.sh
+# Script to fetch outputs produced by cara/ablation/simple-rag.py
+# Usage: ./get_predictions.sh
 
 REMOTE_USER="${REMOTE_USER:-norbert}"
 REMOTE_HOST="${REMOTE_HOST:-xlogin.comp.nus.edu.sg}"
 REMOTE_BASE_DIR="${REMOTE_BASE_DIR:-CS4248/cs4248}"
 
 REMOTE_OUTPUT_DIR="${REMOTE_OUTPUT_DIR:-datapreparation/output}"
-REMOTE_OUTPUT_FILE="${REMOTE_OUTPUT_FILE:-predictions_baseline_vllm_8b_Thinking.jsonl}"
+REMOTE_OUTPUT_FILE="${REMOTE_OUTPUT_FILE:-predictions_simple_rag_qwen3vl8b.jsonl}"
 REMOTE_DIR="~/$REMOTE_BASE_DIR/$REMOTE_OUTPUT_DIR"
 REMOTE_FILE="$REMOTE_DIR/$REMOTE_OUTPUT_FILE"
 LOCAL_BASE_DIR="$(cd "$(dirname "$0")" && pwd)/$REMOTE_OUTPUT_DIR"

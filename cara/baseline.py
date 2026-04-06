@@ -60,7 +60,7 @@ class HatefulBenignDecision(BaseModel):
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_PATH = os.environ.get(
     "BASELINE_DATA_PATH",
-    os.path.join(BASE_DIR, "datapreparation", "output", "facebook-samples-test.jsonl"),
+    os.path.join(BASE_DIR, "datapreparation", "output", "facebook-samples-test-roberta.jsonl"),
 )
 IMG_DIR = os.environ.get(
     "BASELINE_IMG_DIR", os.path.join(BASE_DIR, "facebook-data", "img")
