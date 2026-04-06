@@ -637,6 +637,7 @@ BATCH_SIZE = 8
 
 class HateSpeechPrediction(BaseModel):
     label: int = Field(description="0 for non-hateful, 1 for hateful", ge=0, le=1)
+    reasoning: str = Field(description="Brief reason for the label based on image, text, and retrieved context")
 
 # =============================
 # 4. BATCH-ENABLED WRAPPER
@@ -781,8 +782,12 @@ def extract_output(ai_message, is_thinking):
     label = 0
     if json_match:
         try:
-            label = json.loads(json_match.group(0)).get("label", 0)
-        except:
+            parsed = json.loads(json_match.group(0))
+            label = parsed.get("label", 0)
+            parsed_reasoning = parsed.get("reasoning")
+            if isinstance(parsed_reasoning, str) and parsed_reasoning.strip():
+                reasoning = parsed_reasoning.strip()
+        except ValueError:
             pass
     return {"label": label, "reasoning": reasoning, "raw_output": raw}
 
@@ -863,8 +868,8 @@ def main():
     parser = PydanticOutputParser(pydantic_object=HateSpeechPrediction)
     prompt_template = ChatPromptTemplate.from_messages([
         ("system", (
-            "You are an objective content moderator. Use the provided examples of similar memes to help classify this meme.\n"
-            "These examples show how other memes convey meaning through metaphors and visual elements.\n"
+            "You are an objective content moderator. Use the provided examples to help classify this meme.\n"
+            "Some examples may explain the underlying metaphors, while others simply demonstrate hateful vs. non-hateful pairings.\n"
             "0 = Non-hateful, 1 = Hateful.\n\n"
             "Example Context:\n{context}\n\n{format_instructions}"
         )),

@@ -54,85 +54,59 @@ def load_facebook_data():
 
 def create_siglip_embeddings(data, model, processor, device, version):
     """
-    Create SigLIP embeddings for multimodal data.
-    Each entry will have both image and text embeddings.
+    Create SigLIP text-only embeddings from meme_captions + metaphors.
+    No image embeddings — pure caption-to-caption semantic search.
     """
     embeddings = []
     metadata = []
 
-    print(f"Creating SigLIP embeddings for version: {version}...")
+    print(f"Creating SigLIP text embeddings for version: {version}...")
     for item in tqdm(data):
-        img_fname = item.get("img_fname", "")
-        
-        if item.get("source") == "facebook":
-            # For facebook data, img_fname is formatted like 'img/42953.png'
-            img_path = FACEBOOK_DATA_DIR / img_fname
-        else:
-            img_path = MEMECAP_IMAGES / img_fname
-
-        if not img_path.exists():
-            print(f"Warning: Image not found: {img_path}")
-            continue
-
         try:
-            # Load and process image
-            image = Image.open(img_path).convert("RGB")
+            # Build focused text from meme_captions + metaphors only
+            text_parts = []
 
-            combined_text = ""
-            
             if version != "no_context":
-                # Create combined text representation
-                # Combine title, meme captions, img captions, and metaphors for rich context
-                text_parts = []
-                if item.get("title"):
-                    text_parts.append(f"Title: {item['title']}")
-
                 if item.get("meme_captions"):
-                    text_parts.append("Meaning: " + " ".join(item["meme_captions"]))
+                    text_parts.extend(item["meme_captions"])
 
-                if item.get("img_captions"):
-                    text_parts.append("Description: " + " ".join(item["img_captions"]))
-
-                # Add metaphors if present
-                if item.get("metaphors") and isinstance(item["metaphors"], list) and len(item["metaphors"]) > 0:
-                    metaphor_texts = []
+                if item.get("metaphors") and isinstance(item["metaphors"], list):
                     for m in item["metaphors"]:
-                        # Some entries may only have 'meaning', some may have 'metaphor' and 'meaning'
                         if isinstance(m, dict):
                             parts = []
                             if m.get("metaphor"):
-                                parts.append(f"Metaphor: {m['metaphor']}")
+                                parts.append(m["metaphor"])
                             if m.get("meaning"):
-                                parts.append(f"Meaning: {m['meaning']}")
+                                parts.append(m["meaning"])
                             if parts:
-                                metaphor_texts.append("; ".join(parts))
-                    if metaphor_texts:
-                        text_parts.append("Metaphors: " + " | ".join(metaphor_texts))
+                                text_parts.append(" -> ".join(parts))
 
-                combined_text = " | ".join(text_parts)
+            combined_text = "; ".join(text_parts) if text_parts else ""
 
-            # Process with SigLIP
+            # Encode text only via SigLIP text encoder
             inputs = processor(
-                text=[combined_text] if combined_text else [""], # Empty string for no context
-                images=[image],
+                text=[combined_text] if combined_text else [""],
                 return_tensors="pt",
                 padding="max_length",
                 truncation=True,
             ).to(device)
 
             with torch.no_grad():
-                outputs = model(**inputs)
+                text_feat = model.get_text_features(**inputs)
+                # Handle BaseModelOutputWithPooling vs raw tensor
+                if not isinstance(text_feat, torch.Tensor):
+                    text_feat = text_feat.pooler_output
+                text_embedding = text_feat[0].cpu().numpy()
 
-                # Get normalized embeddings
-                image_embedding = outputs.image_embeds[0].cpu().numpy()
-                text_embedding = outputs.text_embeds[0].cpu().numpy()
-
-                # Combine image and text embeddings (concatenate)
-                combined_embedding = np.concatenate([image_embedding, text_embedding])
-
-            embeddings.append(combined_embedding)
+            embeddings.append(text_embedding)
 
             # Store metadata for retrieval
+            img_fname = item.get("img_fname", "")
+            if item.get("source") == "facebook":
+                img_path = FACEBOOK_DATA_DIR / img_fname
+            else:
+                img_path = MEMECAP_IMAGES / img_fname
+
             metadata.append({
                 "post_id": item.get("post_id", "unknown"),
                 "img_fname": img_fname,
@@ -146,7 +120,7 @@ def create_siglip_embeddings(data, model, processor, device, version):
             })
 
         except Exception as e:
-            print(f"Error processing {img_fname}: {e}")
+            print(f"Error processing {item.get('img_fname', '?')}: {e}")
             continue
 
     return np.array(embeddings), metadata

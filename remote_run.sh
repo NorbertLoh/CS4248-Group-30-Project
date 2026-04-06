@@ -14,18 +14,29 @@ if [ -z "${SLURM_JOB_ID:-}" ]; then
 
 fi
 
+# Use node-local scratch for temporary and cache files to avoid NFS .nfs* busy-file errors.
+SCRATCH_ROOT="${SLURM_TMPDIR:-/tmp/$USER/cs4248}"
+mkdir -p "$SCRATCH_ROOT" "$SCRATCH_ROOT/tmp" "$SCRATCH_ROOT/pip-cache" "$SCRATCH_ROOT/hf-cache"
+export TMPDIR="$SCRATCH_ROOT/tmp"
+export TEMP="$TMPDIR"
+export TMP="$TMPDIR"
+export PIP_CACHE_DIR="$SCRATCH_ROOT/pip-cache"
+export HF_HOME="$SCRATCH_ROOT/hf-cache"
+export HF_HUB_CACHE="$HF_HOME/hub"
+export TRANSFORMERS_CACHE="$HF_HOME/transformers"
+export HF_DATASETS_CACHE="$HF_HOME/datasets"
+export XDG_CACHE_HOME="$SCRATCH_ROOT/xdg-cache"
+
 VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
-# TARGET_SCRIPT="sft/sft.py"
-# TARGET_SCRIPT="sft/export_gguf.py"
-# TARGET_SCRIPT="sft/gguftest.py"
-# TARGET_SCRIPT="sft/loratest.py"
-TARGET_SCRIPT="inference/inference.py"
-TARGET_ARGS="--kb_version no_context"
-# TARGET_SCRIPT="inference/build_clip_rag.py"
-# TARGET_ARGS="--version all"
-QWEN_REPO_ID="unsloth/Qwen3-VL-8B-Instruct-unsloth-bnb-4bit"
-QWEN_MODEL_DIR="${QWEN_UNSLOTH_4BIT_MODEL:-$(pwd)/models/Qwen3-VL-8B-Instruct-unsloth-bnb-4bit}"
+TARGET_SCRIPT="${TARGET_SCRIPT:-cara/qwen-rag-vllm-lora.py}"
+
+STAGE2_DATA_PATH="${STAGE2_DATA_PATH:-datapreparation/output/facebook-samples-test-rationale-excluded.jsonl}"
+STAGE2_OUT_PATH="${STAGE2_OUT_PATH:-datapreparation/output/predictions_stage2_vllm_lora.jsonl}"
+UNSLOTH_QWEN3_VL_MODEL_ID="${UNSLOTH_QWEN3_VL_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
+USE_JUDGE_LORA="${USE_JUDGE_LORA:-1}"
+JUDGE_LORA_PATH="${JUDGE_LORA_PATH:-judge-qwen3-lora}"
+STAGE2_ARGS="${STAGE2_ARGS:-}"
 
 echo "Starting remote run at $(date)"
 
@@ -45,28 +56,21 @@ if [ ! -f "$TARGET_SCRIPT" ]; then
 	exit 1
 fi
 
-if [ ! -f "$QWEN_MODEL_DIR/config.json" ]; then
-	echo "Unsloth 4-bit model not found locally at: $QWEN_MODEL_DIR"
-	echo "Downloading $QWEN_REPO_ID to remote workspace..."
-	mkdir -p "$QWEN_MODEL_DIR"
-	"$PYBIN" - <<PY
-import os
-from huggingface_hub import snapshot_download
+echo "Stage 2 data path: $STAGE2_DATA_PATH"
+echo "Stage 2 output path: $STAGE2_OUT_PATH"
+echo "Model ID: $UNSLOTH_QWEN3_VL_MODEL_ID"
+echo "Use judge LoRA: $USE_JUDGE_LORA"
+echo "Judge LoRA path: $JUDGE_LORA_PATH"
 
-snapshot_download(
-    repo_id="$QWEN_REPO_ID",
-    local_dir=r"$QWEN_MODEL_DIR",
-    local_dir_use_symlinks=False,
-    token=os.environ.get("HF_TOKEN"),
-)
-print("Model download complete")
-PY
-fi
+mkdir -p "$(dirname "$STAGE2_OUT_PATH")"
 
-TARGET_ARGS="$TARGET_ARGS"
-echo "Using local Unsloth model dir: $QWEN_MODEL_DIR"
-
-echo "Running inference script with: $PYBIN $TARGET_SCRIPT $TARGET_ARGS $@"
-"$PYBIN" -u "$TARGET_SCRIPT" $TARGET_ARGS "$@"
+echo "Running LoRA inference script: $PYBIN $TARGET_SCRIPT $STAGE2_ARGS $*"
+STAGE2_DATA_PATH="$STAGE2_DATA_PATH" \
+STAGE2_OUT_PATH="$STAGE2_OUT_PATH" \
+UNSLOTH_QWEN3_VL_MODEL_ID="$UNSLOTH_QWEN3_VL_MODEL_ID" \
+USE_JUDGE_LORA="$USE_JUDGE_LORA" \
+JUDGE_LORA_PATH="$JUDGE_LORA_PATH" \
+"$PYBIN" -u "$TARGET_SCRIPT" \
+	$STAGE2_ARGS "$@"
 
 echo "Remote run finished at $(date)"

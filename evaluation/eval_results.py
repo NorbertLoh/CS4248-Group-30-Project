@@ -4,7 +4,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from tabulate import tabulate
 
 # Load facebook-samples.jsonl (ground truth)
-with open('datapreparation/output/facebook-samples_50.jsonl', 'r', encoding='utf-8') as f:
+with open('datapreparation/output/facebook-samples-test.jsonl', 'r', encoding='utf-8') as f:
     gt = [json.loads(line) for line in f]
     gt_dict = {str(item['id']): item['label'] for item in gt}
 
