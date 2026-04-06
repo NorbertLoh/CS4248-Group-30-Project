@@ -29,12 +29,16 @@ export XDG_CACHE_HOME="$SCRATCH_ROOT/xdg-cache"
 
 VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
-TARGET_SCRIPT="${TARGET_SCRIPT:-cara/baseline.py}"
+TARGET_SCRIPT="${TARGET_SCRIPT:-cara/ablation/simple-rag.py}"
 
-BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
-BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_baseline_vllm_8b_Thinking.jsonl}"
-BASELINE_MODEL_ID="${BASELINE_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
-BASELINE_ARGS="${BASELINE_ARGS:-}"
+STAGE2_DATA_PATH="${STAGE2_DATA_PATH:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
+STAGE2_OUT_PATH="${STAGE2_OUT_PATH:-datapreparation/output/predictions_simple_rag_qwen3vl8b.jsonl}"
+RAG_VLM_MODEL_ID="${RAG_VLM_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
+MEMECAP_DATA="${MEMECAP_DATA:-memecap-data/memes-trainval.json}"
+RAG_TOP_K="${RAG_TOP_K:-5}"
+RAG_SCORE_THRESHOLD="${RAG_SCORE_THRESHOLD:-0.0}"
+MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-512}"
+STAGE2_ARGS="${STAGE2_ARGS:-}"
 
 echo "Starting remote run at $(date)"
 
@@ -54,17 +58,25 @@ if [ ! -f "$TARGET_SCRIPT" ]; then
 	exit 1
 fi
 
-echo "Baseline data path: $BASELINE_DATA_PATH"
-echo "Baseline output path: $BASELINE_OUT_PATH"
-echo "Model ID: $BASELINE_MODEL_ID"
+echo "Stage 2 data path: $STAGE2_DATA_PATH"
+echo "Stage 2 output path: $STAGE2_OUT_PATH"
+echo "Model ID: $RAG_VLM_MODEL_ID"
+echo "MemeCap data path: $MEMECAP_DATA"
+echo "RAG top-k: $RAG_TOP_K"
+echo "RAG score threshold: $RAG_SCORE_THRESHOLD"
+echo "Max new tokens: $MAX_NEW_TOKENS"
 
-mkdir -p "$(dirname "$BASELINE_OUT_PATH")"
+mkdir -p "$(dirname "$STAGE2_OUT_PATH")"
 
-echo "Running baseline inference script: $PYBIN $TARGET_SCRIPT $BASELINE_ARGS $*"
-BASELINE_DATA_PATH="$BASELINE_DATA_PATH" \
-BASELINE_OUT_PATH="$BASELINE_OUT_PATH" \
-BASELINE_MODEL_ID="$BASELINE_MODEL_ID" \
+echo "Running simple-rag inference script: $PYBIN $TARGET_SCRIPT $STAGE2_ARGS $*"
+STAGE2_DATA_PATH="$STAGE2_DATA_PATH" \
+STAGE2_OUT_PATH="$STAGE2_OUT_PATH" \
+RAG_VLM_MODEL_ID="$RAG_VLM_MODEL_ID" \
+MEMECAP_DATA="$MEMECAP_DATA" \
+RAG_TOP_K="$RAG_TOP_K" \
+RAG_SCORE_THRESHOLD="$RAG_SCORE_THRESHOLD" \
+MAX_NEW_TOKENS="$MAX_NEW_TOKENS" \
 "$PYBIN" -u "$TARGET_SCRIPT" \
-	$BASELINE_ARGS "$@"
+	$STAGE2_ARGS "$@"
 
 echo "Remote run finished at $(date)"
