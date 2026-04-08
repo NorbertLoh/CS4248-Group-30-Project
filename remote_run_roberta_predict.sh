@@ -10,7 +10,7 @@ if [ -z "${SLURM_JOB_ID:-}" ]; then
 	# exec srun --unbuffered --gres=gpu:1 --constraint=${constraint} --mem=64G "$0" "$@ --time=120"
 	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
-	exec srun --unbuffered --label --partition=gpu-long --time=3:00:00 --gres="gpu:a100-80:1"  --mem=64G "$0" "$@"
+	exec srun --unbuffered --label --partition=gpu-long --time=3:00:00 --gres="gpu:a100-40:1"  --mem=64G "$0" "$@"
 
 fi
 
@@ -32,9 +32,9 @@ PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/sft/rationale_roberta.py}"
 
 ROBERTA_MODEL_DIR="${ROBERTA_MODEL_DIR:-./metameme_roberta_model}"
-ROBERTA_INPUT_FILE="${ROBERTA_INPUT_FILE:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
-ROBERTA_OUTPUT_FILE="${ROBERTA_OUTPUT_FILE:-datapreparation/output/final_roberta_predictions.jsonl}"
-ROBERTA_THRESHOLD="${ROBERTA_THRESHOLD:-0.40}"
+ROBERTA_INPUT_FILE="${ROBERTA_INPUT_FILE:-facebook-data/dev.jsonl}"
+ROBERTA_OUTPUT_FILE="${ROBERTA_OUTPUT_FILE:-datapreparation/output/final_roberta_predictions_dev.jsonl}"
+ROBERTA_THRESHOLD="${ROBERTA_THRESHOLD:-0.25}"
 ROBERTA_BATCH_SIZE="${ROBERTA_BATCH_SIZE:-16}"
 VLLM_MODEL_ID="${VLLM_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
 ROBERTA_PREDICT_ARGS="${ROBERTA_PREDICT_ARGS:-}"

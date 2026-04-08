@@ -1,6 +1,8 @@
 import json
 import os
-from typing import Any, Dict, List
+import random
+import re
+from typing import Any, Dict, List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -21,25 +23,27 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 DATA_PATH = os.environ.get(
 	"STAGE2_DATA_PATH",
-	os.path.join(BASE_DIR, "datapreparation", "output", "facebook-samples-test-roberta.jsonl"),
+	os.path.join(BASE_DIR, "facebook-data", "dev.jsonl"),
 )
 IMG_DIR = os.environ.get("STAGE2_IMG_DIR", os.path.join(BASE_DIR, "facebook-data", "img"))
 OUT_PATH = os.environ.get(
 	"STAGE2_OUT_PATH",
-	os.path.join(BASE_DIR, "datapreparation", "output", "predictions_simple_rag_qwen3vl8b.jsonl"),
-)
-
-MEMECAP_DATA = os.environ.get(
-	"MEMECAP_DATA",
-	os.path.join(BASE_DIR, "memecap-data", "memes-trainval.json"),
+	os.path.join(BASE_DIR, "datapreparation", "output", "predictions_simple_rag_qwen3vl8b_dev.jsonl"),
 )
 
 MODEL_ID = os.environ.get("RAG_VLM_MODEL_ID", "Qwen/Qwen3-VL-8B-Thinking")
 EMBED_MODEL_ID = os.environ.get("RAG_TEXT_EMBED_MODEL_ID", "sentence-transformers/all-MiniLM-L6-v2")
 
-RAG_TOP_K = int(os.environ.get("RAG_TOP_K", "5"))
-RAG_THRESHOLD = float(os.environ.get("RAG_SCORE_THRESHOLD", "0.0"))
+RAG_TOP_K = int(os.environ.get("RAG_TOP_K", "2"))
+RAG_THRESHOLD = float(os.environ.get("RAG_SCORE_THRESHOLD", "0.2"))
+RAG_QUERY_MAX_CHARS = int(os.environ.get("RAG_QUERY_MAX_CHARS", "320"))
+RAG_SHUFFLE_TEST = os.environ.get("RAG_SHUFFLE_TEST", "0").lower() in {"1", "true", "yes"}
 MAX_NEW_TOKENS = int(os.environ.get("MAX_NEW_TOKENS", "512"))
+
+RAG_KB_DATA = os.environ.get(
+	"RAG_KB_DATA",
+	os.path.join(BASE_DIR, "hateful-captioning", "copy captions_vllm_output1 copy.jsonl"),
+)
 
 
 def load_json_or_jsonl(path: str) -> List[Dict[str, Any]]:
@@ -92,12 +96,12 @@ def mean_pool(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor) -> 
 
 
 class MemeCapRetriever:
-	def __init__(self, memecap_path: str, embed_model_id: str) -> None:
+	def __init__(self, kb_path: str, embed_model_id: str) -> None:
 		self.device = "cuda" if torch.cuda.is_available() else "cpu"
 		self.tokenizer = AutoTokenizer.from_pretrained(embed_model_id)
 		self.encoder = AutoModel.from_pretrained(embed_model_id).to(self.device).eval()
 
-		raw = load_json_or_jsonl(memecap_path)
+		raw = load_json_or_jsonl(kb_path)
 		self.entries = self._build_entries(raw)
 		self.texts = [entry["text"] for entry in self.entries]
 		self.embeddings = self._embed_texts(self.texts) if self.texts else None
@@ -107,9 +111,8 @@ class MemeCapRetriever:
 		entries: List[Dict[str, Any]] = []
 
 		for row in raw_rows:
-			title = str(row.get("title", "")).strip()
-			meme_captions = row.get("meme_captions", [])
-			caption_text = " ; ".join([str(c).strip() for c in meme_captions if str(c).strip()])
+			if not isinstance(row, dict):
+				continue
 
 			for metaphor_item in row.get("metaphors", []):
 				if not isinstance(metaphor_item, dict):
@@ -120,20 +123,11 @@ class MemeCapRetriever:
 				if not metaphor and not meaning:
 					continue
 
-				entry_text = (
-					f"Title: {title}. "
-					f"Metaphor: {metaphor}. "
-					f"Meaning: {meaning}. "
-					f"Meme context: {caption_text}."
-				)
-
 				entries.append(
 					{
-						"text": entry_text,
-						"title": title,
+						"text": f"Metaphor: {metaphor}. Meaning: {meaning}.",
 						"metaphor": metaphor,
 						"meaning": meaning,
-						"context": caption_text,
 					}
 				)
 
@@ -181,26 +175,41 @@ class MemeCapRetriever:
 			item = dict(self.entries[idx])
 			item["score"] = float(score)
 			results.append(item)
+		return results
 
-		if results:
-			return results
 
-		fallback_results: List[Dict[str, Any]] = []
-		for score, idx in zip(top_k.values.tolist(), top_k.indices.tolist()):
-			item = dict(self.entries[idx])
-			item["score"] = float(score)
-			fallback_results.append(item)
-		return fallback_results
+def normalize_ocr_text(text: str) -> str:
+	normalized = re.sub(r"\s+", " ", (text or "").strip())
+	normalized = re.sub(r"(.)\1{3,}", r"\1\1", normalized)
+	return normalized
+
+
+def get_short_image_caption(sample: Dict[str, Any], max_chars: int = 120) -> str:
+	for key in ("caption", "image_caption", "img_caption", "meme_caption", "caption_text"):
+		value = str(sample.get(key, "")).strip()
+		if value:
+			return value[:max_chars]
+	return ""
+
+
+def build_retrieval_query(sample: Dict[str, Any], max_chars: int) -> str:
+	ocr_text = normalize_ocr_text(str(sample.get("text", sample.get("ocr_text", ""))))
+	caption = get_short_image_caption(sample)
+	query_parts = [f"OCR: {ocr_text}"] if ocr_text else []
+	if caption:
+		query_parts.append(f"Caption: {caption}")
+	query = " | ".join(query_parts).strip()
+	return query[:max_chars]
 
 
 def build_context_block(retrieved: List[Dict[str, Any]]) -> str:
 	if not retrieved:
-		return "No retrieved metaphor-meaning context available."
+		return "No retrieved metaphor/meaning context available."
 
 	lines: List[str] = []
 	for i, item in enumerate(retrieved, start=1):
 		lines.append(
-			f"[{i}] score={item['score']:.4f}; metaphor={item['metaphor']}; meaning={item['meaning']}; title={item['title']}"
+			f"[{i}] score={item['score']:.4f}; metaphor={item.get('metaphor', '')}; meaning={item.get('meaning', '')}"
 		)
 	return "\n".join(lines)
 
@@ -209,7 +218,7 @@ def build_prompt(ocr_text: str, rag_context: str, schema_json: str) -> str:
 	instruction = (
 		"You are a strict hateful meme classifier.\n"
 		"Use both the image and OCR text.\n"
-		"The retrieved MemeCap metaphor/meaning context is reference evidence, not ground truth.\n"
+		"The retrieved metaphor/meaning context is reference evidence, not ground truth.\n"
 		"Classify as 1 only when there is clear hateful targeting of a protected group, slur, dehumanization, or incitement.\n"
 		"Otherwise classify as 0.\n"
 		"Return only strict JSON matching the schema."
@@ -217,7 +226,7 @@ def build_prompt(ocr_text: str, rag_context: str, schema_json: str) -> str:
 
 	user_payload = (
 		f"OCR text: {ocr_text}\n\n"
-		f"Retrieved MemeCap metaphor/meaning context:\n{rag_context}\n\n"
+		f"Retrieved metaphor/meaning context:\n{rag_context}\n\n"
 		f"Schema: {schema_json}"
 	)
 
@@ -229,6 +238,39 @@ def build_prompt(ocr_text: str, rag_context: str, schema_json: str) -> str:
 		f"{user_payload}<|im_end|>\n"
 		"<|im_start|>assistant\n"
 	)
+
+
+def parse_generation(generated: str) -> Tuple[int, str]:
+	parsed_label = 0
+	parsed_rationale = ""
+	try:
+		parsed = json.loads(generated)
+		parsed_label = parse_label(parsed.get("label", 0))
+		parsed_rationale = str(parsed.get("rationale", "")).strip()
+	except json.JSONDecodeError:
+		lowered = generated.lower()
+		parsed_label = 1 if "hateful" in lowered else 0
+		parsed_rationale = "parse_fallback"
+	return parsed_label, parsed_rationale
+
+
+def compute_accuracy(samples: List[Dict[str, Any]], pred_key: str) -> float:
+	total = 0
+	correct = 0
+	for sample in samples:
+		if pred_key not in sample or "label" not in sample:
+			continue
+		try:
+			gold = int(sample.get("label", 0))
+			pred = int(sample.get(pred_key, 0))
+		except (TypeError, ValueError):
+			continue
+		total += 1
+		if gold == pred:
+			correct += 1
+	if total == 0:
+		return 0.0
+	return correct / total
 
 
 def parse_label(raw_label: Any) -> int:
@@ -248,8 +290,8 @@ def main() -> None:
 	if not samples:
 		raise RuntimeError(f"No input samples loaded from: {DATA_PATH}")
 
-	print(f"Building MemeCap retriever from {MEMECAP_DATA}")
-	retriever = MemeCapRetriever(memecap_path=MEMECAP_DATA, embed_model_id=EMBED_MODEL_ID)
+	print(f"Building retrieval corpus from {RAG_KB_DATA}")
+	retriever = MemeCapRetriever(kb_path=RAG_KB_DATA, embed_model_id=EMBED_MODEL_ID)
 	print(f"Loaded {len(retriever.entries)} metaphor/meaning KB entries")
 
 	print(f"Loading VLM: {MODEL_ID}")
@@ -272,11 +314,13 @@ def main() -> None:
 			sample["pred_label"] = 0
 			sample["pred_rationale"] = "IMAGE_NOT_FOUND"
 			sample["rag_context"] = ""
+			sample["retrieval_query"] = ""
 			sample["raw_output"] = ""
 			continue
 
-		ocr_text = str(sample.get("text", sample.get("ocr_text", ""))).strip()
-		retrieved = retriever.retrieve(query_text=ocr_text, k=RAG_TOP_K, threshold=RAG_THRESHOLD)
+		retrieval_query = build_retrieval_query(sample, max_chars=RAG_QUERY_MAX_CHARS)
+		ocr_text = normalize_ocr_text(str(sample.get("text", sample.get("ocr_text", ""))))
+		retrieved = retriever.retrieve(query_text=retrieval_query, k=RAG_TOP_K, threshold=RAG_THRESHOLD)
 		rag_context = build_context_block(retrieved)
 
 		prompt = build_prompt(ocr_text=ocr_text, rag_context=rag_context, schema_json=schema_json)
@@ -293,8 +337,11 @@ def main() -> None:
 		valid_samples.append(
 			{
 				"sample": sample,
+				"ocr_text": ocr_text,
 				"retrieved": retrieved,
 				"rag_context": rag_context,
+				"image_rgb": image_rgb,
+				"retrieval_query": retrieval_query,
 			}
 		)
 
@@ -314,31 +361,58 @@ def main() -> None:
 	for meta, out in zip(valid_samples, outputs):
 		sample = meta["sample"]
 		generated = out.outputs[0].text
-
-		parsed_label = 0
-		parsed_rationale = ""
-		try:
-			parsed = json.loads(generated)
-			parsed_label = parse_label(parsed.get("label", 0))
-			parsed_rationale = str(parsed.get("rationale", "")).strip()
-		except json.JSONDecodeError:
-			lowered = generated.lower()
-			parsed_label = 1 if "hateful" in lowered else 0
-			parsed_rationale = "parse_fallback"
+		parsed_label, parsed_rationale = parse_generation(generated)
 
 		sample["pred_label"] = parsed_label
 		sample["pred_rationale"] = parsed_rationale
 		sample["rag_context"] = meta["rag_context"]
+		sample["retrieval_query"] = meta["retrieval_query"]
 		sample["rag_top_k"] = [
 			{
 				"score": item["score"],
-				"metaphor": item["metaphor"],
-				"meaning": item["meaning"],
-				"title": item["title"],
+				"metaphor": item.get("metaphor", ""),
+				"meaning": item.get("meaning", ""),
 			}
 			for item in meta["retrieved"]
 		]
 		sample["raw_output"] = generated
+
+	if RAG_SHUFFLE_TEST and valid_samples:
+		print("Running shuffle test with shuffled retrieved contexts")
+		shuffled_contexts = [meta["rag_context"] for meta in valid_samples]
+		rng = random.Random(42)
+		rng.shuffle(shuffled_contexts)
+		if len(shuffled_contexts) > 1 and all(
+			shuffled_contexts[i] == valid_samples[i]["rag_context"] for i in range(len(shuffled_contexts))
+		):
+			shuffled_contexts = shuffled_contexts[1:] + shuffled_contexts[:1]
+
+		shuffle_prompts: List[Dict[str, Any]] = []
+		for meta, shuffled_context in zip(valid_samples, shuffled_contexts):
+			shuffle_prompts.append(
+				{
+					"prompt": build_prompt(
+						ocr_text=meta["ocr_text"],
+						rag_context=shuffled_context,
+						schema_json=schema_json,
+					),
+					"multi_modal_data": {"image": meta["image_rgb"]},
+				}
+			)
+
+		shuffle_outputs = llm.generate(shuffle_prompts, sampling_params=sampling)
+		for meta, shuffled_context, out in zip(valid_samples, shuffled_contexts, shuffle_outputs):
+			sample = meta["sample"]
+			generated = out.outputs[0].text
+			parsed_label, parsed_rationale = parse_generation(generated)
+			sample["pred_label_shuffled"] = parsed_label
+			sample["pred_rationale_shuffled"] = parsed_rationale
+			sample["rag_context_shuffled"] = shuffled_context
+			sample["raw_output_shuffled"] = generated
+
+		real_acc = compute_accuracy(samples, pred_key="pred_label")
+		shuffle_acc = compute_accuracy(samples, pred_key="pred_label_shuffled")
+		print(f"Shuffle test accuracy -> real_rag={real_acc:.4f}, shuffled_rag={shuffle_acc:.4f}")
 
 	os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
 	print(f"Writing output to {OUT_PATH}")
@@ -348,12 +422,20 @@ def main() -> None:
 			record = {
 				"id": sample.get("id"),
 				"img": sample.get("img"),
-				"ocr_text": sample.get("text", sample.get("ocr_text", "")),
+				"ocr_text": normalize_ocr_text(str(sample.get("text", sample.get("ocr_text", "")))),
+				"retrieval_query": sample.get("retrieval_query", ""),
 				"label": int(label_value),
 				"reason": sample.get("pred_rationale", ""),
 				"rag_context": sample.get("rag_context", ""),
 				"rag_top_k": sample.get("rag_top_k", []),
 				"raw_output": sample.get("raw_output", ""),
+				"shuffle_test": {
+					"enabled": RAG_SHUFFLE_TEST,
+					"pred_label_shuffled": sample.get("pred_label_shuffled"),
+					"pred_rationale_shuffled": sample.get("pred_rationale_shuffled", ""),
+					"rag_context_shuffled": sample.get("rag_context_shuffled", ""),
+					"raw_output_shuffled": sample.get("raw_output_shuffled", ""),
+				},
 			}
 			file_handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 

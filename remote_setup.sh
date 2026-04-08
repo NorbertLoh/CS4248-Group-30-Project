@@ -2,19 +2,6 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# Use node-local scratch for temporary and cache files to avoid NFS .nfs* busy-file errors.
-SCRATCH_ROOT="${SLURM_TMPDIR:-/tmp/$USER/cs4248}"
-mkdir -p "$SCRATCH_ROOT" "$SCRATCH_ROOT/tmp" "$SCRATCH_ROOT/pip-cache" "$SCRATCH_ROOT/hf-cache"
-export TMPDIR="$SCRATCH_ROOT/tmp"
-export TEMP="$TMPDIR"
-export TMP="$TMPDIR"
-export PIP_CACHE_DIR="$SCRATCH_ROOT/pip-cache"
-export HF_HOME="$SCRATCH_ROOT/hf-cache"
-export HF_HUB_CACHE="$HF_HOME/hub"
-export TRANSFORMERS_CACHE="$HF_HOME/transformers"
-export HF_DATASETS_CACHE="$HF_HOME/datasets"
-export XDG_CACHE_HOME="$SCRATCH_ROOT/xdg-cache"
-
 VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TRANSFORMERS_PIN="transformers==4.35.2"

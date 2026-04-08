@@ -13,7 +13,7 @@ from transformers import (
 MODEL_DIR = os.environ.get("MODEL_DIR", "./metameme_roberta_model") # Your saved best model
 DATA_FILE = os.environ.get(
     "DATA_FILE",
-    "datapreparation/output/predictions_rationale_vllm_8B captioned.jsonl",
+    "facebook-data/dev.jsonl",
 ) # Your Qwen-generated data
 MODEL_NAME = os.environ.get("MODEL_NAME", "roberta-base") # Must match what you trained
 

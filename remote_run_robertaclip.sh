@@ -31,7 +31,7 @@ VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/ablation/roberta-clip-baseline.py}"
 
-BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
+BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-facebook-data/dev.jsonl}"
 BASELINE_IMG_DIR="${BASELINE_IMG_DIR:-facebook-data/img}"
 BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_roberta_clip_baseline.jsonl}"
 ROBERTA_MODEL_DIR="${ROBERTA_MODEL_DIR:-metameme_roberta_model}"

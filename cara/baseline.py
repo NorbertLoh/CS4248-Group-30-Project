@@ -13,48 +13,13 @@ from PIL import Image
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
+from vllm.sampling_params import StructuredOutputsParams
 
 
 class HatefulBenignDecision(BaseModel):
-    label: Literal["hateful", "benign"] = Field(
-        description="Binary meme decision: hateful or benign"
+    label: int = Field(
+        description="Binary meme decision: 1 for hateful, 0 for benign"
     )
-    reason: str = Field(
-        description="Short explanation based on image and OCR text"
-    )
-    thought_process: str = Field(
-        default="", 
-        description="The chain of thought extracted from the think tags"
-    )
-
-    @classmethod
-    def from_raw_text(cls, text: str):
-        # 1. Extract the thinking block
-        think_match = re.search(r'<think>(.*?)</think>', text, re.DOTALL)
-        thought_process = think_match.group(1).strip() if think_match else ""
-        
-        # 2. Extract everything after the thinking block (this should be the JSON)
-        remainder = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
-        
-        # 3. Safely extract JSON from the remainder (handles ```json ... ``` markdown)
-        json_match = re.search(r'\{.*\}', remainder, re.DOTALL)
-        json_str = json_match.group(0) if json_match else remainder
-
-        # 4. Parse JSON and instantiate
-        try:
-            parsed_data = json.loads(json_str)
-            label = parsed_data.get("label", "benign")
-            reason = parsed_data.get("reason", "")
-            
-            # Failsafe for invalid literal
-            if label not in ["hateful", "benign"]:
-                label = "benign"
-                
-        except (json.JSONDecodeError, TypeError, AttributeError):
-            label = "benign"
-            reason = "parse_fallback"
-            
-        return cls(label=label, reason=reason, thought_process=thought_process)
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -90,11 +55,7 @@ def main() -> None:
         gpu_memory_utilization=0.85,
     )
 
-    # We exclude thought_process from the schema we pass to the prompt
-    # so the model knows the JSON it generates should only be label and reason.
     schema_dict = HatefulBenignDecision.model_json_schema()
-    if "thought_process" in schema_dict.get("properties", {}):
-        del schema_dict["properties"]["thought_process"]
 
     prompts = []
 
@@ -129,9 +90,9 @@ def main() -> None:
         )
 
     sampling = SamplingParams(
-        temperature=0.3,
+        temperature=0.0,
         max_tokens=1024,
-        stop=["<|im_end|>"]
+        structured_outputs=StructuredOutputsParams(json=schema_dict),
     )
 
     outputs = llm.generate(prompts, sampling_params=sampling)
@@ -143,9 +104,8 @@ def main() -> None:
             # Since we ended our prompt with "<think>\n", the model output
             # starts directly with the thought. We prepend the tag to make regex work.
             raw_text = "<think>\n" + out.outputs[0].text
-            
-            # Parse everything via our custom method
-            parsed = HatefulBenignDecision.from_raw_text(raw_text)
+
+            parsed = HatefulBenignDecision.model_validate_json(out.outputs[0].text)
 
             record = {
                 "id": s.get("id"),
@@ -153,8 +113,6 @@ def main() -> None:
                 "ocr_text": s.get("text", ""),
                 "label": normalize_binary(parsed.label),
                 "label_text": parsed.label,
-                "reason": parsed.reason,
-                "thought_process": parsed.thought_process, # Saved the thoughts!
                 "raw_output": raw_text,
             }
             f.write(json.dumps(record, ensure_ascii=False) + "\n")

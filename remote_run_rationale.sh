@@ -31,8 +31,8 @@ VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/sft/rationale-vllm.py}"
 
-RATIONALE_DATA_PATH="${RATIONALE_DATA_PATH:-datapreparation/output/facebook-samples-test-rationale-to-caption.jsonl}"
-RATIONALE_OUT_PATH="${RATIONALE_OUT_PATH:-datapreparation/output/predictions_rationale_vllm_8B.jsonl}"
+RATIONALE_DATA_PATH="${RATIONALE_DATA_PATH:-facebook-data/train.jsonl}"
+RATIONALE_OUT_PATH="${RATIONALE_OUT_PATH:-datapreparation/output/predictions_rationale_vllm_8B_all.jsonl}"
 UNSLOTH_QWEN3_VL_MODEL_ID="${UNSLOTH_QWEN3_VL_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
 RATIONALE_ARGS="${RATIONALE_ARGS:-}"
 

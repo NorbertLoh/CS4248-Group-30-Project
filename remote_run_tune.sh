@@ -31,7 +31,7 @@ VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/classification/tune_threshold.py}"
 
-DATA_FILE="${DATA_FILE:-datapreparation/output/predictions_rationale_vllm_8B captioned.jsonl}"
+DATA_FILE="${DATA_FILE:-facebook-data/dev.jsonl}"
 MODEL_DIR="${MODEL_DIR:-./metameme_roberta_model}"
 MODEL_NAME="${MODEL_NAME:-roberta-base}"
 TUNE_RESULTS_PATH="${TUNE_RESULTS_PATH:-datapreparation/output/tune_threshold_results.txt}"
