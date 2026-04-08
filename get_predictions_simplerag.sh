@@ -9,7 +9,7 @@ REMOTE_HOST="${REMOTE_HOST:-xlogin.comp.nus.edu.sg}"
 REMOTE_BASE_DIR="${REMOTE_BASE_DIR:-CS4248/cs4248}"
 
 REMOTE_OUTPUT_DIR="${REMOTE_OUTPUT_DIR:-datapreparation/output}"
-REMOTE_OUTPUT_FILE="${REMOTE_OUTPUT_FILE:-predictions_simple_rag_qwen3vl8b.jsonl}"
+REMOTE_OUTPUT_FILE="${REMOTE_OUTPUT_FILE:-predictions_simple_rag_qwen3vl8b_dev.jsonl}"
 REMOTE_DIR="~/$REMOTE_BASE_DIR/$REMOTE_OUTPUT_DIR"
 REMOTE_FILE="$REMOTE_DIR/$REMOTE_OUTPUT_FILE"
 LOCAL_BASE_DIR="$(cd "$(dirname "$0")" && pwd)/$REMOTE_OUTPUT_DIR"

@@ -67,3 +67,4 @@ node_modules/
 deploy_and_submit.sh
 get_predictions.sh
 memecap_train.parquet
+./metameme_roberta_model

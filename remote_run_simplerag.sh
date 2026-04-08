@@ -11,7 +11,7 @@ if [ -z "${SLURM_JOB_ID:-}" ]; then
 	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
 	exec srun --unbuffered --label --partition=gpu-long --time=3:00:00 --gres="gpu:a100-40:1"  --mem=64G "$0" "$@"
-
+	exec srun --unbuffered --label --gres="gpu:a100-40:1"  --mem=64G "$0" "$@"
 fi
 
 # Use node-local scratch for temporary and cache files to avoid NFS .nfs* busy-file errors.
@@ -31,11 +31,11 @@ VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/ablation/simple-rag.py}"
 
-STAGE2_DATA_PATH="${STAGE2_DATA_PATH:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
-STAGE2_OUT_PATH="${STAGE2_OUT_PATH:-datapreparation/output/predictions_simple_rag_qwen3vl8b.jsonl}"
+STAGE2_DATA_PATH="${STAGE2_DATA_PATH:-facebook-data/dev.jsonl}"
+STAGE2_OUT_PATH="${STAGE2_OUT_PATH:-datapreparation/output/predictions_simple_rag_qwen3vl8b_dev.jsonl}"
 RAG_VLM_MODEL_ID="${RAG_VLM_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
 MEMECAP_DATA="${MEMECAP_DATA:-memecap-data/memes-trainval.json}"
-RAG_TOP_K="${RAG_TOP_K:-5}"
+RAG_TOP_K="${RAG_TOP_K:-3}"
 RAG_SCORE_THRESHOLD="${RAG_SCORE_THRESHOLD:-0.0}"
 MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-512}"
 STAGE2_ARGS="${STAGE2_ARGS:-}"

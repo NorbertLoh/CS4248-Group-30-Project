@@ -26,7 +26,7 @@ def pick_score(item, pred_label):
     return float(pred_label)
 
 # Load facebook-samples.jsonl (ground truth)
-with open('datapreparation/output/facebook-samples-test-roberta.jsonl', 'r', encoding='utf-8') as f:
+with open('facebook-data/dev.jsonl', 'r', encoding='utf-8') as f:
     gt = [json.loads(line) for line in f]
     gt_dict = {str(item['id']): item['label'] for item in gt}
 

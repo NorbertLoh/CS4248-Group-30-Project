@@ -36,7 +36,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 DATA_PATH = os.environ.get(
     "RATIONALE_DATA_PATH",
-    os.path.join(BASE_DIR, "datapreparation", "output", "datapreparation/output/facebook-samples-test-rationale-to-caption.jsonl"),
+    os.path.join(BASE_DIR, "datapreparation", "output", "facebook-data/train.jsonl"),
 )
 IMG_DIR = os.environ.get(
     "RATIONALE_IMG_DIR",
@@ -44,7 +44,7 @@ IMG_DIR = os.environ.get(
 )
 OUT_PATH = os.environ.get(
     "RATIONALE_OUT_PATH",
-    os.path.join(BASE_DIR, "datapreparation", "output", "predictions_rationale_vllm_8B.jsonl"),
+    os.path.join(BASE_DIR, "datapreparation", "output", "predictions_rationale_vllm_8B_all.jsonl"),
 )
 
 MODEL_ID = os.environ.get("UNSLOTH_QWEN3_VL_MODEL_ID", "Qwen/Qwen3-VL-8B-Thinking")

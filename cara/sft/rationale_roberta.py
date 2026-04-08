@@ -12,14 +12,15 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # --- 1. CONFIGURATION ---
 VLLM_MODEL_ID = os.environ.get("VLLM_MODEL_ID", "Qwen/Qwen3-VL-8B-Thinking")
-ROBERTA_MODEL_DIR = os.environ.get("MODEL_DIR", "./metameme_roberta_model")
-INPUT_DATA = os.environ.get("INPUT_FILE", "datapreparation/output/facebook-samples-test-roberta.jsonl")
-OUTPUT_FILE = os.environ.get("OUTPUT_FILE", "datapreparation/output/final_roberta_predictions.jsonl")
-THRESHOLD = float(os.environ.get("THRESHOLD", "0.40"))
+ROBERTA_MODEL_DIR = os.environ.get("MODEL_DIR", "./metameme_roberta_model/checkpoint-958")
+INPUT_DATA = os.environ.get("INPUT_FILE", "datapreparation/output/dev.jsonl")
+OUTPUT_FILE = os.environ.get("OUTPUT_FILE", "datapreparation/output/final_roberta_predictions_dev.jsonl")
+THRESHOLD = float(os.environ.get("THRESHOLD", "0.25"))
 BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "16"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "facebook-data")
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+IMG_DIR = os.environ.get("IMG_DIR", os.path.join(PROJECT_ROOT, "facebook-data"))
 
 # --- 2. PYDANTIC SCHEMA ---
 class VisualEvidenceItem(BaseModel):
@@ -45,12 +46,21 @@ class DualRationaleOutput(BaseModel):
 # --- 3. HELPERS ---
 def resolve_image_path(img_field: str) -> str:
     rel = str(img_field).strip()
+    if not rel:
+        return ""
     candidates = [
         rel,
+        os.path.join(PROJECT_ROOT, rel),
         os.path.join(IMG_DIR, rel),
-        os.path.join(IMG_DIR, "img", os.path.basename(rel))
+        os.path.join(IMG_DIR, "img", os.path.basename(rel)),
+        os.path.join(PROJECT_ROOT, "facebook-data", rel),
+        os.path.join(PROJECT_ROOT, "facebook-data", "img", os.path.basename(rel)),
     ]
+    seen = set()
     for c in candidates:
+        if c in seen:
+            continue
+        seen.add(c)
         if os.path.exists(c): return c
     return ""
 
@@ -103,9 +113,12 @@ def main():
     )
 
     prompts = []
+    missing_image_count = 0
     for sample in samples:
         img_path = resolve_image_path(sample.get("img", ""))
         ocr_text = str(sample.get("text", "")).strip()
+        if not img_path:
+            missing_image_count += 1
         
         task_text = (
             f"### TARGET MEME TEXT:\n'{ocr_text}'\n\n"
@@ -132,6 +145,9 @@ def main():
             "prompt": vllm_prompt,
             "multi_modal_data": {"image": Image.open(img_path).convert("RGB")} if img_path else None
         })
+
+    if missing_image_count:
+        print(f"Warning: {missing_image_count}/{len(samples)} samples missing images; those samples run text-only.")
 
     sampling = SamplingParams(
         temperature=0.0,

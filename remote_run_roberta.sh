@@ -31,7 +31,7 @@ VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/classification/train_roberta.py}"
 
-ROBERTA_DATA_FILE="${ROBERTA_DATA_FILE:-datapreparation/output/predictions_rationale_vllm_8B captioned.jsonl}"
+ROBERTA_DATA_FILE="${ROBERTA_DATA_FILE:-datapreparation/output/predictions_rationale_vllm_8B_all.jsonl}"
 ROBERTA_OUTPUT_DIR="${ROBERTA_OUTPUT_DIR:-./metameme_roberta_model}"
 ROBERTA_ARGS="${ROBERTA_ARGS:-}"
 

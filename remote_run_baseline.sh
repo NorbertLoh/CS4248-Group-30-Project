@@ -10,7 +10,7 @@ if [ -z "${SLURM_JOB_ID:-}" ]; then
 	# exec srun --unbuffered --gres=gpu:1 --constraint=${constraint} --mem=64G "$0" "$@ --time=120"
 	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
 	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
-	exec srun --unbuffered --label --partition=gpu-long --time=3:00:00 --gres="gpu:a100-40:1"  --mem=64G "$0" "$@"
+	exec srun --unbuffered --label --gres="gpu:a100-40:1"  --mem=64G "$0" "$@"
 
 fi
 
@@ -31,9 +31,9 @@ VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
 TARGET_SCRIPT="${TARGET_SCRIPT:-cara/baseline.py}"
 
-BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-datapreparation/output/facebook-samples-test-roberta.jsonl}"
-BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_baseline_vllm_8b_Thinking.jsonl}"
-BASELINE_MODEL_ID="${BASELINE_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
+BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-facebook-data/dev.jsonl}"
+BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_baseline_vllm_8b_Instruct.jsonl}"
+BASELINE_MODEL_ID="${BASELINE_MODEL_ID:-Qwen/Qwen3-VL-8B-Instruct}"
 BASELINE_ARGS="${BASELINE_ARGS:-}"
 
 echo "Starting remote run at $(date)"
