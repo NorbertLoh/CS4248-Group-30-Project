@@ -7,11 +7,8 @@ cd "$(dirname "$0")"
 if [ -z "${SLURM_JOB_ID:-}" ]; then
 	echo "Not running inside SLURM job. Allocating resources with srun..."
 	constraint="xgpe"
-	# exec srun --unbuffered --gres=gpu:1 --constraint=${constraint} --mem=64G "$0" "$@ --time=120"
-	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
-	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
-	exec srun --unbuffered --label --gres="gpu:a100-80:1"  --mem=64G "$0" "$@"
-
+	# exec srun --unbuffered --gres=gpu:1 --constraint=${constraint} --mem=64G "$0" "$@"
+    exec srun --unbuffered --label --gres="gpu:a100-40:1"  --mem=64G "$0" "$@"
 fi
 
 # Use node-local scratch for temporary and cache files to avoid NFS .nfs* busy-file errors.
@@ -29,14 +26,18 @@ export XDG_CACHE_HOME="$SCRATCH_ROOT/xdg-cache"
 
 VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
-TARGET_SCRIPT="${TARGET_SCRIPT:-cara/baseline.py}"
+TARGET_SCRIPT="${TARGET_SCRIPT:-cara/invidual-test/invidual-cara.py}"
 
-BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-facebook-data/dev.jsonl}"
-BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_baseline_vllm_8b-test2.jsonl}"
-BASELINE_MODEL_ID="${BASELINE_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
-BASELINE_ARGS="${BASELINE_ARGS:-}"
+if [ "${PYBIN#/}" = "$PYBIN" ]; then
+	PYBIN="$(pwd)/$PYBIN"
+fi
 
-echo "Starting remote run at $(date)"
+VLLM_MODEL_ID="${VLLM_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
+ROBERTA_MODEL_DIR="${ROBERTA_MODEL_DIR:-cara/metameme_roberta_model/checkpoint-958}"
+THRESHOLD="${THRESHOLD:-0.25}"
+CARA_ARGS="${CARA_ARGS:-}"
+
+echo "Starting individual CARA (vLLM + RoBERTa) remote run at $(date)"
 
 if [ ! -x "$PYBIN" ]; then
 	echo "Virtualenv not ready at $PYBIN" >&2
@@ -54,17 +55,20 @@ if [ ! -f "$TARGET_SCRIPT" ]; then
 	exit 1
 fi
 
-echo "Baseline data path: $BASELINE_DATA_PATH"
-echo "Baseline output path: $BASELINE_OUT_PATH"
-echo "Model ID: $BASELINE_MODEL_ID"
+echo "vLLM Model ID: $VLLM_MODEL_ID"
+echo "RoBERTa Model Dir: $ROBERTA_MODEL_DIR"
+echo "Threshold: $THRESHOLD"
+echo "Running individual CARA inference script: $PYBIN $TARGET_SCRIPT $CARA_ARGS $*"
 
-mkdir -p "$(dirname "$BASELINE_OUT_PATH")"
+TARGET_SCRIPT_DIR="$(dirname "$TARGET_SCRIPT")"
+TARGET_SCRIPT_NAME="$(basename "$TARGET_SCRIPT")"
 
-echo "Running baseline inference script: $PYBIN $TARGET_SCRIPT $BASELINE_ARGS $*"
-BASELINE_DATA_PATH="$BASELINE_DATA_PATH" \
-BASELINE_OUT_PATH="$BASELINE_OUT_PATH" \
-BASELINE_MODEL_ID="$BASELINE_MODEL_ID" \
-"$PYBIN" -u "$TARGET_SCRIPT" \
-	$BASELINE_ARGS "$@"
+pushd "$TARGET_SCRIPT_DIR" >/dev/null
+VLLM_MODEL_ID="$VLLM_MODEL_ID" \
+ROBERTA_MODEL_DIR="$ROBERTA_MODEL_DIR" \
+THRESHOLD="$THRESHOLD" \
+"$PYBIN" -u "$TARGET_SCRIPT_NAME" \
+	$CARA_ARGS "$@"
+popd >/dev/null
 
-echo "Remote run finished at $(date)"
+echo "Individual CARA remote run finished at $(date)"

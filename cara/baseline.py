@@ -7,7 +7,7 @@ os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 # 3. PREVENT NCCL TIMEOUTS ON CLUSTERS
 os.environ["NCCL_IGNORE_DISABLED_P2P"] = "1"
 import re
-from typing import Literal
+from typing import Any, Literal
 
 from PIL import Image
 from pydantic import BaseModel, Field
@@ -20,6 +20,10 @@ class HatefulBenignDecision(BaseModel):
     label: int = Field(
         description="Binary meme decision: 1 for hateful, 0 for benign"
     )
+    reasoning: str = Field(
+        description="Step by step reasoning for the decision, based on both image and text content. Be concise but thorough."
+    )
+    
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -34,12 +38,20 @@ OUT_PATH = os.environ.get(
     "BASELINE_OUT_PATH",
     os.path.join(BASE_DIR, "datapreparation", "output", "predictions_baseline_vllm_8b.jsonl"),
 )
-# MODEL_ID = os.environ.get("BASELINE_MODEL_ID", "QuantTrio/Qwen3-VL-32B-Thinking-AWQ")
 MODEL_ID = os.environ.get("BASELINE_MODEL_ID", "Qwen/Qwen3-VL-8B-Thinking")
 
-def normalize_binary(label_text: str) -> int:
-    text = str(label_text or "").strip().lower()
-    return 1 if text == "hateful" else 0
+def normalize_binary(label_value: Any) -> int:
+    # Accept both numeric labels (0/1) and text labels (hateful/benign).
+    if isinstance(label_value, bool):
+        return int(label_value)
+
+    if isinstance(label_value, (int, float)):
+        return 1 if int(label_value) == 1 else 0
+
+    text = str(label_value or "").strip().lower()
+    if text in {"1", "hateful", "hate", "offensive"}:
+        return 1
+    return 0
 
 
 def main() -> None:
@@ -67,7 +79,7 @@ def main() -> None:
         prompt_text = (
             "Classify this meme as hateful or benign.\n"
             "Use both image content and OCR text.\n"
-            "Return only JSON that matches the schema.\n\n"
+            "Return only JSON that matches the schema, including a short reasoning field.\n\n"
             f"OCR text: {ocr_text}\n"
             f"Schema: {json.dumps(schema_dict)}"
         )
@@ -113,6 +125,7 @@ def main() -> None:
                 "ocr_text": s.get("text", ""),
                 "label": normalize_binary(parsed.label),
                 "label_text": parsed.label,
+                "reasoning": parsed.reasoning,
                 "raw_output": raw_text,
             }
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
