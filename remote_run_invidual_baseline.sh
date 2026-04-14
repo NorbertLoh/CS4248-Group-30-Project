@@ -7,10 +7,8 @@ cd "$(dirname "$0")"
 if [ -z "${SLURM_JOB_ID:-}" ]; then
 	echo "Not running inside SLURM job. Allocating resources with srun..."
 	constraint="xgpe"
-	# exec srun --unbuffered --gres=gpu:1 --constraint=${constraint} --mem=64G "$0" "$@ --time=120"
-	# exec srun -p gpu --gpus=1 -w xgpi0 "$0" "$@"
-	# exec srun -p gpu --gpus=1 -w xgpe8 --mem=64G "$0" "$@"
-	exec srun --unbuffered --label --gres="gpu:a100-80:1"  --mem=64G "$0" "$@"
+	exec srun --unbuffered --gres=gpu:1 --constraint=${constraint} --mem=16G "$0" "$@"
+    # exec srun --unbuffered --label --gres="gpu:a100-80:1"  --mem=64G "$0" "$@"
 
 fi
 
@@ -29,14 +27,16 @@ export XDG_CACHE_HOME="$SCRATCH_ROOT/xdg-cache"
 
 VENV_DIR=".venv"
 PYBIN="$VENV_DIR/bin/python"
-TARGET_SCRIPT="${TARGET_SCRIPT:-cara/baseline.py}"
+TARGET_SCRIPT="${TARGET_SCRIPT:-cara/invidual-test/invidiual-baseline.py}"
 
-BASELINE_DATA_PATH="${BASELINE_DATA_PATH:-facebook-data/dev.jsonl}"
-BASELINE_OUT_PATH="${BASELINE_OUT_PATH:-datapreparation/output/predictions_baseline_vllm_8b-test2.jsonl}"
+if [ "${PYBIN#/}" = "$PYBIN" ]; then
+	PYBIN="$(pwd)/$PYBIN"
+fi
+
 BASELINE_MODEL_ID="${BASELINE_MODEL_ID:-Qwen/Qwen3-VL-8B-Thinking}"
 BASELINE_ARGS="${BASELINE_ARGS:-}"
 
-echo "Starting remote run at $(date)"
+echo "Starting individual baseline remote run at $(date)"
 
 if [ ! -x "$PYBIN" ]; then
 	echo "Virtualenv not ready at $PYBIN" >&2
@@ -54,17 +54,16 @@ if [ ! -f "$TARGET_SCRIPT" ]; then
 	exit 1
 fi
 
-echo "Baseline data path: $BASELINE_DATA_PATH"
-echo "Baseline output path: $BASELINE_OUT_PATH"
 echo "Model ID: $BASELINE_MODEL_ID"
+echo "Running individual baseline inference script: $PYBIN $TARGET_SCRIPT $BASELINE_ARGS $*"
 
-mkdir -p "$(dirname "$BASELINE_OUT_PATH")"
+TARGET_SCRIPT_DIR="$(dirname "$TARGET_SCRIPT")"
+TARGET_SCRIPT_NAME="$(basename "$TARGET_SCRIPT")"
 
-echo "Running baseline inference script: $PYBIN $TARGET_SCRIPT $BASELINE_ARGS $*"
-BASELINE_DATA_PATH="$BASELINE_DATA_PATH" \
-BASELINE_OUT_PATH="$BASELINE_OUT_PATH" \
+pushd "$TARGET_SCRIPT_DIR" >/dev/null
 BASELINE_MODEL_ID="$BASELINE_MODEL_ID" \
-"$PYBIN" -u "$TARGET_SCRIPT" \
+"$PYBIN" -u "$TARGET_SCRIPT_NAME" \
 	$BASELINE_ARGS "$@"
+popd >/dev/null
 
-echo "Remote run finished at $(date)"
+echo "Individual baseline remote run finished at $(date)"

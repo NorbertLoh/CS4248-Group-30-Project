@@ -52,7 +52,8 @@ def parse_json_object_from_text(text: str) -> Optional[Dict[str, Any]]:
 
 def load_ground_truth_lookup(repo_root: Path) -> Dict[int, int]:
 	lookup: Dict[int, int] = {}
-	for split_name in ("train.jsonl", "dev.jsonl", "test.jsonl"):
+	# Compare CARA outputs against the Facebook dev split only.
+	for split_name in ("dev.jsonl",):
 		split_path = repo_root / "facebook-data" / split_name
 		if not split_path.exists():
 			continue
@@ -101,6 +102,10 @@ def get_ground_truth(
 			if row_id_int is not None and row_id_int in gt_lookup:
 				return gt_lookup[row_id_int], "lookup.id"
 
+		# When lookup is provided, only use the lookup as ground truth.
+		# This avoids treating model output fields as labels.
+		return None, None
+
 	# Prefer explicit GT-like fields before falling back to "label".
 	for key in ("ground_truth", "gold_label", "true_label", "target", "hateful"):
 		parsed = normalize_label(row.get(key))
@@ -122,22 +127,15 @@ def get_ground_truth(
 
 
 def get_prediction(row: Dict[str, Any], gt_source: Optional[str]) -> Optional[int]:
-	# "final_prediction" and similar are strong prediction fields.
-	for key in (
-		"final_prediction",
-		"prediction",
-		"pred",
-		"pred_label",
-		"output_label",
-		"label_text",
-	):
+	# Prefer final_prediction first, then fall back to label.
+	for key in ("final_prediction", "label"):
 		parsed = normalize_label(row.get(key))
 		if parsed in (0, 1):
 			return parsed
 
-	# If GT came from a non-label field, then label can be used as prediction.
-	if gt_source not in (None, "label"):
-		parsed = normalize_label(row.get("label"))
+	# Other prediction aliases as a secondary fallback.
+	for key in ("prediction", "pred", "pred_label", "output_label", "label_text"):
+		parsed = normalize_label(row.get(key))
 		if parsed in (0, 1):
 			return parsed
 
@@ -213,8 +211,9 @@ def main() -> None:
 	script_dir = Path(__file__).resolve().parent
 	repo_root = script_dir.parents[2]
 	results_dir = script_dir.parent / "cara-results"
+	output_dir = script_dir.parent / "cara-results-exclude"
 	gt_lookup = load_ground_truth_lookup(repo_root)
-	print(f"Loaded {len(gt_lookup)} ground-truth labels from facebook-data")
+	print(f"Loaded {len(gt_lookup)} ground-truth labels from facebook-data/dev.jsonl")
 
 	if not results_dir.exists():
 		raise FileNotFoundError(f"Results folder not found: {results_dir}")
@@ -231,7 +230,7 @@ def main() -> None:
 
 	print(f"Found {len(result_files)} CARA result file(s) to process")
 	for file_path in result_files:
-		output_path = script_dir / f"{file_path.stem}_incorrect_only.jsonl"
+		output_path = output_dir / f"{file_path.stem}_incorrect_only.jsonl"
 		filter_incorrect(input_path=file_path, output_path=output_path, gt_lookup=gt_lookup)
 
 
