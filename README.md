@@ -141,7 +141,7 @@ Comparing our results to the leaderboard of Facebook Hateful Memes Challenge in 
 
 ![alt text](readme-images/fb-leaderboard.png)
 
-As the competition was held quite a while ago, we also did a little more research on recent research papers to see how SOTA models performed on the same dataset. Only in the last few years have we seen significant improvements in the performance of models on this dataset, with the introduction of LMMs and better training techniques.
+As the competition was held quite a while ago, we also did a little more research on recent research papers to see how SOTA models performed on the same dataset. Only in the last few years have we seen significant improvements in the performance of models on this dataset, with the introduction of LMMs and better training techniques. The most recent paper also started to explore explainability in hateful meme detection, which is a direction that we also took with our project.
 
 Only recently have we seen models that are able to achieve an accuracy of above 80% and an AUROC of above 90%. This shows that there is still a lot of room for improvement in this task, and that the task is still quite challenging.
 
@@ -152,7 +152,7 @@ Only recently have we seen models that are able to achieve an accuracy of above 
 | [RA-HMD (Qwen2.5-VL-2B)](https://aclanthology.org/2025.emnlp-main.1215/) (Mei et al., 2025\)  | 79.1 | 88.4 |
 | [PromptHate](https://aclanthology.org/2022.emnlp-main.22/) (Cao et al., 2022\)  | 72.98 | 81.45 |
 
-*Note: ExPO-HM scores are different as they are based on a different test set.
+*Note: ExPO-HM scores are different as they used facebook hateful memes dataset along with other hateful meme detection test sets.
 
 # AI Declaration
 This project uses the following AI tools:
