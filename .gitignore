@@ -52,6 +52,7 @@ models/
 *.pth
 *.bin
 *.safetensors
+outputs/
 
 # Logs
 logs/
