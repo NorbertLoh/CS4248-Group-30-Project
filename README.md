@@ -20,6 +20,7 @@ Mentor: Yisong
 	- [So why did we use RoBERTa as a judge instead of LLM?](#so-why-did-we-use-roberta-as-a-judge-instead-of-llm)
 	- [Why does RAG with MemeCap not work on our problem?](#why-does-rag-with-memecap-not-work-on-our-problem)
 	- [LMM Supervised fine-tuning performed decently why didn't we just do that?](#lmm-supervised-fine-tuning-performed-decently-why-didnt-we-just-do-that)
+	- [Explainability](#explainability)
 	- [Model Performance](#model-performance)
 - [AI Declaration](#ai-declaration)
 - [External Resources](#external-resources)
@@ -126,6 +127,9 @@ This showed that the RAG model was looking for words that aligned with the word 
 
 ## LMM Supervised fine-tuning performed decently why didn't we just do that?
 Preliminary fine-tuning of Qwen3-VL demonstrated promising improvements. However, the path toward a high-performing teacher-student distillation requires significant compute resources currently beyond our available infrastructure. Consequently, we shifted our focus toward a more resource-efficient reasoning architecture. Furthermore, the initial baseline test of the Qwen3-VL 32B only achieved an accuracy of around 0.72, which was not significantly better than our CARA model. Given the compute constraints and the competitive performance of CARA, we decided to prioritize the development and refinement of our reasoning-based approach.
+
+## Explainability
+One of the key advantages of CARA is its explainability. By generating both hateful and benign metaphors and meanings for each meme, CARA provides a clear rationale for its classification decision. This allows us to understand the specific semantic pivot that leads to a hateful classification, which is crucial for building trust in the model's predictions and for identifying potential biases or areas for improvement.
 
 ## Model Performance
 
