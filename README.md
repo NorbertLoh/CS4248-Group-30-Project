@@ -97,7 +97,7 @@ The decision to use RoBERTa over LLM-as-a-judge is due to how this is more of a 
 
 Encoder-only is designed for bidirectional language understanding and sequence classification and excels at entailment tasks, whereas Generative LLMs are decode-based, autoregressive models optimised for next-token prediction.
 
-During testing when we tried to use LLM as a judge, slight differences in prompts and text can also severely alter the final outputs from LMMs, making them unsuitable for a judge. Research has also shown that LLMs prefer convincingly written sycophantic responses over correct ones (Sharma et al., 2025).
+When we tried to use LLM-as-a-judge during testing, slight differences in prompts and text can also severely alter the final outputs from LMMs, making them unsuitable for a judge. Research has also shown that LLMs prefer convincingly written sycophantic responses over correct ones (Sharma et al., 2025).
 
 ## Why does RAG with MemeCap not work on our problem?
 
