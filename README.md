@@ -3,7 +3,7 @@ This repository hosts the code used for our CS4248 Natural Language Processing P
 
 Authors: Adrian, Billy, Kenji, Nick, Norbert, Russell 
 
-Mentor: Yisong
+Mentor: Yisong Miao
 
 ## Table of Contents
 
@@ -34,7 +34,7 @@ Mentor: Yisong
 
 
 # Acknowledgements
-We would like to thank Yisong, Prof Christian Von Der Weth and Prof Min-Yen Kan for their guidance and support throughout the project.
+We would like to thank Yisong Miao, Prof Christian Von Der Weth and Prof Min-Yen Kan for their guidance and support throughout the project.
 
 # Supplementary
 
