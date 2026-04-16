@@ -6,7 +6,7 @@ Authors: Adrian, Billy, Kenji, Nick, Norbert, Russell
 Mentor: Yisong
 
 # Acknowledgements
-We would like to thank Yisong, Prof Christian Von Der Weth and Prof Min-Yen Kan for his guidance and support throughout the project.
+We would like to thank Yisong, Prof Christian Von Der Weth and Prof Min-Yen Kan for their guidance and support throughout the project.
 
 # Supplementary
 
@@ -72,6 +72,9 @@ We prepared embeddings using the facebook dataset. When we then ran the same piz
 
 This showed that the RAG model was looking for words that aligned with the word “mexican” and therefore provided an output that talked about “a bald man”, “mexican beans”, etc. This made us realise that “context” in memes differs greatly from the context normally RAG models are used for (Answering questions related to a certain topic, etc.). Memes require larger inferential leaps to arrive at the intended intention. As such, adding the RAG model only served as more noise for our model, reducing the accuracy.
 
+## LMM Supervised fine-tuning performed decently why didn't we just do that?
+Preliminary fine-tuning of Qwen3-VL demonstrated promising improvements. However, the path toward a high-performing teacher-student distillation requires significant compute resources currently beyond our available infrastructure. Consequently, we shifted our focus toward a more resource-efficient reasoning architecture. Furthermore, the initial baseline test of the Qwen3-VL 32B only achieved an accuracy of around 0.72, which was not significantly better than our CARA model. Given the compute constraints and the competitive performance of CARA, we decided to prioritize the development and refinement of our reasoning-based approach.
+
 ## Model Performance
 
 | Model | Accuracy | AUROC |
@@ -100,6 +103,10 @@ This project uses the following AI tools:
 - Copilot Auto for quick scaffolding and boilerplate code for our own experiments and test and debugging.
 - Gemini Pro Nano Banana was used to generate images in early stages of the poster for STePS
 - Copilot Auto was used to generated the bash scripts used for remote cluster usage, but these were heavily modified by us to fit our needs and the cluster environment.
+
+# External Resources
+- Facebook Hateful Memes Dataset: https://www.kaggle.com/datasets/parthplc/facebook-hateful-meme-dataset
+- Unsloth Fine-tuning Notebooks: https://unsloth.ai/docs/get-started/unsloth-notebooks
 
 # References
 Turpin, M., Michael, J., Perez, E., & Bowman, S. R. (2023, December 9). *Language models don’t always say what they think: Unfaithful explanations in chain-of-thought prompting*. arXiv.org. https://arxiv.org/abs/2305.04388
