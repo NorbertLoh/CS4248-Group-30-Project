@@ -38,6 +38,10 @@ We would like to thank Yisong Miao, Prof Christian Von Der Weth and Prof Min-Yen
 
 # Supplementary
 
+[CS4248 Group 30 Extra Slides for STePS](https://docs.google.com/presentation/d/1lYTm4nc3bntDK5ymWgZsmSkDCGVgTrSv58JjZDhcFLM/edit?usp=sharing)
+
+[CS4248 Group 30 Clarification Docs](https://docs.google.com/document/d/1ntuNx0v9bbISCSpLz19XnsZGHnbuKBqQhPgHXQy4N2A/edit?usp=sharing)
+
 ## How did we use MemeCap in our project?
 
 ### 1. The RAG Limitation: From Retrieval to Augmentation
