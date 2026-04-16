@@ -3,7 +3,7 @@ This repository hosts the code used for our CS4248 Natural Language Processing P
 
 Authors: Adrian, Billy, Kenji, Nick, Norbert, Russell 
 
-Mentor: Yisong
+Mentor: Yisong Miao
 
 ## Table of Contents
 
@@ -34,7 +34,7 @@ Mentor: Yisong
 
 
 # Acknowledgements
-We would like to thank Yisong, Prof Christian Von Der Weth and Prof Min-Yen Kan for their guidance and support throughout the project.
+We would like to thank Yisong Miao, Prof Christian Von Der Weth and Prof Min-Yen Kan for their guidance and support throughout the project.
 
 # Supplementary
 
@@ -137,7 +137,7 @@ One of the key advantages of CARA is its inherent explainability. By generating 
 |---|---:|---:|
 | CARA | 0.738 | 0.807 |
 
-Comparing our results to the leaderboard of Facebook Hateful Memes Challenge in 2021, our model would performed well, possibly placing in the 5th or 6th place.
+Comparing our results to the leaderboard of Facebook Hateful Memes Challenge in 2021, our model would perform well, possibly placing in the 5th or 6th place.
 
 ![alt text](readme-images/fb-leaderboard.png)
 
@@ -156,9 +156,9 @@ Only recently have we seen models that are able to achieve an accuracy of above 
 
 # AI Declaration
 This project uses the following AI tools:
-- Copilot Auto for quick scaffolding and boilerplate code for our own experiments and test. It was also used for general debugging.
+- Copilot Auto for quick scaffolding and boilerplate code for our own experiments and tests. It was also used for general debugging.
 - Gemini Pro Nano Banana was used to generate images in early stages of the poster for STePS
-- Copilot Auto was used to generated the bash scripts used for remote cluster usage, but these were heavily modified by us to fit our needs and the cluster environment.
+- Copilot Auto was used to generate the bash scripts used for remote cluster usage, but these were heavily modified by us to fit our needs and the cluster environment.
 
 # External Resources
 - Facebook Hateful Memes Dataset: https://www.kaggle.com/datasets/parthplc/facebook-hateful-meme-dataset
