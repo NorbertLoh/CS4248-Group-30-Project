@@ -17,9 +17,9 @@ Mentor: Yisong
 	- [The confounder problem](#the-confounder-problem)
 	- [Why did we split the classification task into two steps?](#why-did-we-split-the-classification-task-into-two-steps)
 		- [Output comparison](#output-comparison)
-	- [So why did we use RoBERTa as a judge instead of LLM?](#so-why-did-we-use-roberta-as-a-judge-instead-of-llm)
+	- [So why did we use RoBERTa as a judge instead of LLM (Large Language Model)?](#so-why-did-we-use-roberta-as-a-judge-instead-of-llm-large-language-model)
 	- [Why does RAG with MemeCap not work on our problem?](#why-does-rag-with-memecap-not-work-on-our-problem)
-	- [LMM Supervised fine-tuning performed decently why didn't we just do that?](#lmm-supervised-fine-tuning-performed-decently-why-didnt-we-just-do-that)
+	- [LMM (Large Multimodal Model) Supervised fine-tuning performed decently why didn't we just do that?](#lmm-large-multimodal-model-supervised-fine-tuning-performed-decently-why-didnt-we-just-do-that)
 	- [Explainability](#explainability)
 	- [Model Performance](#model-performance)
 - [AI Declaration](#ai-declaration)
@@ -78,7 +78,7 @@ Example:
 
 ![alt text](readme-images/image.png)
 
-This is a benign (ground truth) meme where the LMM rationalise instead of actually reasoning with both hateful and benign interpretations.
+This is a benign (ground truth) meme where the LMM (Large Multimodal Model) rationalise instead of actually reasoning with both hateful and benign interpretations.
 
 ### Output comparison
 
@@ -93,12 +93,12 @@ This is a benign (ground truth) meme where the LMM rationalise instead of actual
 
 This forces CARA to explicitly consider both hateful and benign interpretations before deciding, which led to a **Benign** output for this example.
 
-## So why did we use RoBERTa as a judge instead of LLM?
-The decision to use RoBERTa over LLM-as-a-judge is due to how this is more of a classification task and how encoder-only models and large generative models handle classification tasks.
+## So why did we use RoBERTa as a judge instead of LLM (Large Language Model)?
+The decision to use RoBERTa over LLM-as-a-judge (Large Language Model as a judge) is due to how this is more of a classification task and how encoder-only models and large generative models handle classification tasks.
 
 Encoder-only is designed for bidirectional language understanding and sequence classification and excels at entailment tasks, whereas Generative LLMs are decode-based, autoregressive models optimised for next-token prediction.
 
-When we tried to use LLM-as-a-judge during testing, slight differences in prompts and text can also severely alter the final outputs from LMMs, making them unsuitable for a judge. Research has also shown that LLMs prefer convincingly written sycophantic responses over correct ones (Sharma et al., 2025).
+When we tried to use LMM-as-a-judge during testing, slight differences in prompts and text can also severely alter the final outputs from LMMs, making them unsuitable for a judge. Research has also shown that LLMs prefer convincingly written sycophantic responses over correct ones (Sharma et al., 2025).
 
 ## Why does RAG with MemeCap not work on our problem?
 
@@ -125,7 +125,7 @@ We prepared embeddings using the facebook dataset. When we then ran the same piz
 
 This showed that the RAG model was looking for words that aligned with the word “mexican” and therefore provided an output that talked about “a bald man”, “mexican beans”, etc. This made us realise that “context” in memes differs greatly from the context normally RAG models are used for (Answering questions related to a certain topic, etc.). Memes require larger inferential leaps to arrive at the intended intention. As such, adding the RAG model only served as more noise for our model, reducing the accuracy.
 
-## LMM Supervised fine-tuning performed decently why didn't we just do that?
+## LMM (Large Multimodal Model) Supervised fine-tuning performed decently why didn't we just do that?
 Preliminary fine-tuning of Qwen3-VL demonstrated promising improvements. However, the path toward a high-performing teacher-student distillation requires significant compute resources currently beyond our available infrastructure. Consequently, we shifted our focus toward a more resource-efficient reasoning architecture. Furthermore, the initial baseline test of the Qwen3-VL 32B only achieved an accuracy of around 0.72, which was not significantly better than our CARA model. Given the compute constraints and the competitive performance of CARA, we decided to prioritize the development and refinement of our reasoning-based approach.
 
 ## Explainability
