@@ -5,10 +5,37 @@ Authors: Adrian, Billy, Kenji, Nick, Norbert, Russell
 
 Mentor: Yisong
 
+
+
 # Acknowledgements
 We would like to thank Yisong, Prof Christian Von Der Weth and Prof Min-Yen Kan for their guidance and support throughout the project.
 
 # Supplementary
+
+## How did we use MemeCap in our project?
+
+### 1. The RAG Limitation: From Retrieval to Augmentation
+
+Initially, we utilized MemeCap (a dataset providing rich, literal, and metaphorical descriptions of memes) within a Retrieval-Augmented Generation (RAG) pipeline. The goal was to retrieve similar meme "contexts" to help classify new ones.
+
+However, we observed that:
+
+- Contextual Sparsity: RAG was limited by the existing "knowledge" in the vector database. If a meme’s specific visual-textual combination was unique, the retrieved context was often irrelevant or too generic.
+
+- Surface-Level Matching: RAG often matched memes based on visual similarity rather than the underlying hate logic.
+
+To solve this, we moved from retrieving context to generating it. We augmented the Facebook Hateful Meme (FHM) dataset by adopting the MemeCap annotation structure for every FHM entry, hoping that the generated literal and metaphorical descriptions would provide richer, more nuanced information for classification. However, we found the similar problem of the generated context being too generic and not providing the necessary information for classification.
+
+### 2. Leveraging Semantic Fluidity for CARA
+As we built this augmented dataset, we noticed a critical characteristic of memes: The Metaphor-Meaning Duality. The same visual metaphor (e.g., a "trash can" or "cleaning a house") can be semantically fluid. Depending on the textual overlay, that single metaphor can shift between:
+
+1. A Benign Interpretation: "Cleaning up the environment."
+2. A Hateful Interpretation: "Ethnic cleansing or dehumanization."
+
+This fluidity is the key component for our Contrastive Adversarial Reasoning Architecture (CARA). Because one metaphor can branch into two opposing meanings, it allows the model to perform a Counterfactual Analysis:
+
+- The Task: We force the model to generate (or evaluate) both a "Benign Interpretation" and a "Hateful Interpretation" for the same metaphor.
+- The Result: By comparing these two branches (Contrastive Reasoning), the model identifies exactly which semantic "pivot" makes the meme hateful. It stops looking for "bad words" and starts looking for the intentionality behind the metaphor.
 
 ## The confounder problem
 Confounding memes where benign text + benign image = hateful are a common problem in multimodal hate speech detection. This is because instead of pattern matching, it requires true reasoning for detection.
@@ -107,6 +134,7 @@ This project uses the following AI tools:
 # External Resources
 - Facebook Hateful Memes Dataset: https://www.kaggle.com/datasets/parthplc/facebook-hateful-meme-dataset
 - Unsloth Fine-tuning Notebooks: https://unsloth.ai/docs/get-started/unsloth-notebooks
+- MemeCap: https://github.com/eujhwang/meme-cap
 
 # References
 Turpin, M., Michael, J., Perez, E., & Bowman, S. R. (2023, December 9). *Language models don’t always say what they think: Unfaithful explanations in chain-of-thought prompting*. arXiv.org. https://arxiv.org/abs/2305.04388
