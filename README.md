@@ -5,6 +5,22 @@ Authors: Adrian, Billy, Kenji, Nick, Norbert, Russell
 
 Mentor: Yisong
 
+## Table of Contents
+
+- [Acknowledgements](#acknowledgements)
+- [Supplementary](#supplementary)
+- [How did we use MemeCap in our project?](#how-did-we-use-memecap-in-our-project)
+- [The confounder problem](#the-confounder-problem)
+- [Why did we split the classification task into two steps?](#why-did-we-split-the-classification-task-into-two-steps)
+- [So why did we use RoBERTa as a judge instead of LLM?](#so-why-did-we-use-roberta-as-a-judge-instead-of-llm)
+- [Why does RAG with MemeCap not work on our problem?](#why-does-rag-with-memecap-not-work-on-our-problem)
+- [LMM Supervised fine-tuning performed decently why didn't we just do that?](#lmm-supervised-fine-tuning-performed-decently-why-didnt-we-just-do-that)
+- [Model Performance](#model-performance)
+- [AI Declaration](#ai-declaration)
+- [External Resources](#external-resources)
+- [References](#references)
+- [Remote cluster workflow (send code, setup, run)](#remote-cluster-workflow-send-code-setup-run)
+
 
 
 # Acknowledgements
