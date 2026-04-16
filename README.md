@@ -156,9 +156,9 @@ Only recently have we seen models that are able to achieve an accuracy of above 
 
 # AI Declaration
 This project uses the following AI tools:
-- Copilot Auto for quick scaffolding and boilerplate code for our own experiments and test. It was also used for general debugging.
+- Copilot Auto for quick scaffolding and boilerplate code for our own experiments and tests. It was also used for general debugging.
 - Gemini Pro Nano Banana was used to generate images in early stages of the poster for STePS
-- Copilot Auto was used to generated the bash scripts used for remote cluster usage, but these were heavily modified by us to fit our needs and the cluster environment.
+- Copilot Auto was used to generate the bash scripts used for remote cluster usage, but these were heavily modified by us to fit our needs and the cluster environment.
 
 # External Resources
 - Facebook Hateful Memes Dataset: https://www.kaggle.com/datasets/parthplc/facebook-hateful-meme-dataset
