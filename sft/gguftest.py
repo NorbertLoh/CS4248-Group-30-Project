@@ -30,7 +30,6 @@ base64_image = encode_image(test_image_path)
 # We avoid the word 'poster' in instructions to reduce logit bias.
 instruction = "JSON only. Provide: 'title', 'metaphors' (list), and 'explanation'."
 
-# This structure tells the model exactly where the assistant's turn starts.
 # We PRE-FILL the '{' to lock it into JSON mode immediately.
 raw_prompt = f"""<|im_start|>system
 You are a meme analyst. Output strict JSON.<|im_end|>

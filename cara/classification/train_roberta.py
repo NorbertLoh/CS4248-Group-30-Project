@@ -13,7 +13,7 @@ from transformers import (
 
 # --- 1. CONFIGURATION ---
 MODEL_NAME = "roberta-base" # Change to "roberta-large" if you have >16GB VRAM
-DATA_FILE = os.environ.get("DATA_FILE", "predictions_rationale_vllm_8B captioned.jsonl")
+DATA_FILE = os.environ.get("DATA_FILE", "HMD_captioned.jsonl")
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./metameme_roberta_model")
 
 # --- 2. DATA FLATTENING FUNCTION ---

@@ -32,7 +32,6 @@ class VisualEvidenceItem(BaseModel):
     )
 
 class DualRationaleOutput(BaseModel):
-    # CRITICAL: 'reasoning' must be the first field so the model generates it before the lists.
     reasoning: str = Field(
         description="Step-by-step logical analysis of the meme's intent and cultural context. Provide this detailed thought process first."
     )

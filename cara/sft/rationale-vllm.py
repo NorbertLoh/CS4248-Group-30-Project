@@ -19,7 +19,6 @@ class VisualEvidenceItem(BaseModel):
     )
 
 class DualRationaleOutput(BaseModel):
-    # CRITICAL: 'reasoning' must be the first field so the model generates it before the lists.
     reasoning: str = Field(
         description="Step-by-step logical analysis of the meme's intent and cultural context. Provide this detailed thought process first."
     )
@@ -146,7 +145,6 @@ def main() -> None:
         enforce_eager=True,
     )
 
-    # Increased max_tokens slightly to accommodate the reasoning paragraph
     sampling = SamplingParams(
         temperature=0.0,
         max_tokens=2048,
@@ -160,10 +158,8 @@ def main() -> None:
         try:
             parsed = json.loads(output.outputs[0].text)
             
-            # Extract reasoning
             reasoning = str(parsed.get("reasoning", "")).strip()
             
-            # Extract lists
             hateful_list = parsed.get("hateful", [])
             benign_list = parsed.get("benign", [])
 
@@ -199,7 +195,7 @@ def main() -> None:
                 "img": sample.get("img"),
                 "ocr_text": sample.get("text", ""),
                 "label": sample.get("label"),
-                "reasoning": sample.get("reasoning", ""), # Saved reasoning
+                "reasoning": sample.get("reasoning", ""),
                 "hateful": sample.get("hateful", []),
                 "benign": sample.get("benign", []),
             }
