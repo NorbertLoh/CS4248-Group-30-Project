@@ -137,7 +137,7 @@ One of the key advantages of CARA is its inherent explainability. By generating 
 |---|---:|---:|
 | CARA | 0.738 | 0.807 |
 
-Comparing our results to the leaderboard of Facebook Hateful Memes Challenge in 2021, our model would performed well, possibly placing in the 5th or 6th place.
+Comparing our results to the leaderboard of Facebook Hateful Memes Challenge in 2021, our model would perform well, possibly placing in the 5th or 6th place.
 
 ![alt text](readme-images/fb-leaderboard.png)
 
