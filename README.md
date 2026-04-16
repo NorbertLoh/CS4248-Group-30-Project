@@ -125,7 +125,7 @@ We prepared embeddings using the facebook dataset. When we then ran the same piz
 
 This showed that the RAG model was looking for words that aligned with the word “mexican” and therefore provided an output that talked about “a bald man”, “mexican beans”, etc. This made us realise that “context” in memes differs greatly from the context normally RAG models are used for (Answering questions related to a certain topic, etc.). Memes require larger inferential leaps to arrive at the intended intention. As such, adding the RAG model only served as more noise for our model, reducing the accuracy.
 
-## LMM Supervised fine-tuning performed decently why didn't we just do that?
+## LMM Supervised Fine-Tuning performed decently, why didn't we just do that?
 Preliminary fine-tuning of Qwen3-VL demonstrated promising improvements. However, the path toward a high-performing teacher-student distillation requires significant compute resources currently beyond our available infrastructure. Consequently, we shifted our focus toward a more resource-efficient reasoning architecture. Furthermore, the initial baseline test of the Qwen3-VL 32B only achieved an accuracy of around 0.72, which was not significantly better than our CARA model. Given the compute constraints and the competitive performance of CARA, we decided to prioritize the development and refinement of our reasoning-based approach.
 
 ## Explainability
