@@ -5,10 +5,18 @@ Authors: Adrian, Billy, Kenji, Nick, Norbert, Russell
 
 Mentor: Yisong
 
+# Acknowledgements
+We would like to thank Yisong, Prof Christian Von Der Weth and Prof Min-Yen Kan for his guidance and support throughout the project.
+
 # Supplementary
 
 ## The confounder problem
 Confounding memes where benign text + benign image = hateful are a common problem in multimodal hate speech detection. This is because instead of pattern matching, it requires true reasoning for detection.
+
+For example, the following memes both have the same text but the different benign images lead to different interpretations.
+
+![alt text](readme-images/desert-empty.png)
+![alt text](readme-images/desert-party.png)
 
 ## Why did we split the classification task into two steps?
 Research has also shown that Chain-of-Thought may be an illusion, where if a model has a slight bias towards classifying an image or text as harmful or benign, it will generate tokens that mimic the statistical distribution of human explanations that lead to that specific outcome instead of exploring logical paths to determine the outcome  (Turpin et al., 2023). It is reverse-engineering a justification to fit the initial probabilistic lean.
@@ -93,7 +101,16 @@ This project uses the following AI tools:
 - Gemini Pro Nano Banana was used to generate images in early stages of the poster for STePS
 - Copilot Auto was used to generated the bash scripts used for remote cluster usage, but these were heavily modified by us to fit our needs and the cluster environment.
 
+# References
+Turpin, M., Michael, J., Perez, E., & Bowman, S. R. (2023, December 9). *Language models don’t always say what they think: Unfaithful explanations in chain-of-thought prompting*. arXiv.org. https://arxiv.org/abs/2305.04388
 
+Sharma, M., Tong, M., Korbak, T., Duvenaud, D., Askell, A., Bowman, S. R., Cheng, N., Durmus, E., Hatfield-Dodds, Z., Johnston, S. R., Kravec, S., Maxwell, T., McCandlish, S., Ndousse, K., Rausch, O., Schiefer, N., Yan, D., Zhang, M., & Perez, E. (2025, May 10). *Towards understanding sycophancy in language models*. arXiv.org. https://arxiv.org/abs/2310.13548
+
+Mei, J., Sun, M., Chen, J., Qin, P., Li, Y., Chen, D., & Byrne, B. (2026, March 1). *Expo-HM: Learning to explain-then-detect for hateful meme detection*. arXiv.org. https://arxiv.org/abs/2510.08630
+
+Mei, J., Chen, J., Yang, G., Lin, W., & Byrne, B. (2025). Robust adaptation of large multimodal models for retrieval augmented hateful meme detection. *Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing*, 23817–23839. https://doi.org/10.18653/v1/2025.emnlp-main.1215
+
+Cao, R., Lee, R. K.-W., Chong, W.-H., & Jiang, J. (2022). Prompting for Multimodal Hateful Meme Classification. *Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing*, 321–332. https://doi.org/10.18653/v1/2022.emnlp-main.22
 
 ## Remote cluster workflow (send code, setup, run)
 
