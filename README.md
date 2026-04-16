@@ -7,19 +7,28 @@ Mentor: Yisong
 
 ## Table of Contents
 
+- [CS4248-Group-30-Project](#cs4248-group-30-project)
+	- [Table of Contents](#table-of-contents)
 - [Acknowledgements](#acknowledgements)
 - [Supplementary](#supplementary)
-- [How did we use MemeCap in our project?](#how-did-we-use-memecap-in-our-project)
-- [The confounder problem](#the-confounder-problem)
-- [Why did we split the classification task into two steps?](#why-did-we-split-the-classification-task-into-two-steps)
-- [So why did we use RoBERTa as a judge instead of LLM?](#so-why-did-we-use-roberta-as-a-judge-instead-of-llm)
-- [Why does RAG with MemeCap not work on our problem?](#why-does-rag-with-memecap-not-work-on-our-problem)
-- [LMM Supervised fine-tuning performed decently why didn't we just do that?](#lmm-supervised-fine-tuning-performed-decently-why-didnt-we-just-do-that)
-- [Model Performance](#model-performance)
+	- [How did we use MemeCap in our project?](#how-did-we-use-memecap-in-our-project)
+		- [1. The RAG Limitation: From Retrieval to Augmentation](#1-the-rag-limitation-from-retrieval-to-augmentation)
+		- [2. Leveraging Semantic Fluidity for CARA](#2-leveraging-semantic-fluidity-for-cara)
+	- [The confounder problem](#the-confounder-problem)
+	- [Why did we split the classification task into two steps?](#why-did-we-split-the-classification-task-into-two-steps)
+		- [Output comparison](#output-comparison)
+	- [So why did we use RoBERTa as a judge instead of LLM?](#so-why-did-we-use-roberta-as-a-judge-instead-of-llm)
+	- [Why does RAG with MemeCap not work on our problem?](#why-does-rag-with-memecap-not-work-on-our-problem)
+	- [LMM Supervised fine-tuning performed decently why didn't we just do that?](#lmm-supervised-fine-tuning-performed-decently-why-didnt-we-just-do-that)
+	- [Model Performance](#model-performance)
 - [AI Declaration](#ai-declaration)
 - [External Resources](#external-resources)
 - [References](#references)
-- [Remote cluster workflow (send code, setup, run)](#remote-cluster-workflow-send-code-setup-run)
+	- [Remote cluster workflow (send code, setup, run)](#remote-cluster-workflow-send-code-setup-run)
+		- [1) Set up passwordless SSH from WSL (one time)](#1-set-up-passwordless-ssh-from-wsl-one-time)
+		- [2) Send code to cluster](#2-send-code-to-cluster)
+		- [3) Setup environment on cluster (first time, or when deps change)](#3-setup-environment-on-cluster-first-time-or-when-deps-change)
+		- [4) Run inference on GPU](#4-run-inference-on-gpu)
 
 
 
@@ -88,7 +97,7 @@ The decision to use RoBERTa over LLM-as-a-judge is due to how this is more of a 
 
 Encoder-only is designed for bidirectional language understanding and sequence classification and excels at entailment tasks, whereas Generative LLMs are decode-based, autoregressive models optimised for next-token prediction.
 
-Slight differences in prompts and text can also severely alter the final outputs from LMMs, making them unsuitable for a judge. Research has also shown that models prefer convincingly written sycophantic responses over correct ones (Sharma et al., 2025).
+During testing when we tried to use LLM as a judge, slight differences in prompts and text can also severely alter the final outputs from LMMs, making them unsuitable for a judge. Research has also shown that LLMs prefer convincingly written sycophantic responses over correct ones (Sharma et al., 2025).
 
 ## Why does RAG with MemeCap not work on our problem?
 
